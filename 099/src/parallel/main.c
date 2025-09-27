@@ -20,6 +20,9 @@ int main (int argc, char * argv[]) {
         circuit_check(irank, i);
     }
 
+    fprintf(stdout, "Process %d is done\n", irank);
+    fflush(stdout);
+
     MPI_Finalize();
     return EXIT_SUCCESS;
 }
