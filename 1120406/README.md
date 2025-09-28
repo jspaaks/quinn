@@ -1,4 +1,4 @@
-# circuit satisfiability
+# exercise 4.6
 
 ## Requirements
 
