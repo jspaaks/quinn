@@ -17,26 +17,26 @@ elseif(UNIX)
     list(APPEND CMAKE_INSTALL_RPATH $ORIGIN/../lib)
 endif()
 
-add_executable(tgt_exe_parallel)
+add_executable(tgt_exe_parallel1)
 
-set_property(TARGET tgt_exe_parallel PROPERTY OUTPUT_NAME parallel)
+set_property(TARGET tgt_exe_parallel1 PROPERTY OUTPUT_NAME parallel1)
 
 find_package(MPI REQUIRED)
 
 target_compile_definitions(
-    tgt_exe_parallel
+    tgt_exe_parallel1
     PRIVATE
         $<$<CONFIG:Debug>:DEBUG>
 )
 
 target_compile_features(
-    tgt_exe_parallel
+    tgt_exe_parallel1
     PRIVATE
         c_std_23
 )
 
 target_compile_options(
-    tgt_exe_parallel
+    tgt_exe_parallel1
     PRIVATE
         -Wall
         -Wextra
@@ -47,13 +47,13 @@ target_compile_options(
 )
 
 target_include_directories(
-    tgt_exe_parallel
+    tgt_exe_parallel1
     PRIVATE
         ${PROJECT_ROOT}/include
 )
 
 target_link_libraries(
-    tgt_exe_parallel
+    tgt_exe_parallel1
     PRIVATE
         tgt_lib_primes
     PUBLIC
@@ -61,9 +61,9 @@ target_link_libraries(
 )
 
 target_sources(
-    tgt_exe_parallel
+    tgt_exe_parallel1
     PRIVATE
-        ${PROJECT_ROOT}/src/parallel/main.c
+        ${PROJECT_ROOT}/src/parallel1/main.c
 )
 
-install(TARGETS tgt_exe_parallel)
+install(TARGETS tgt_exe_parallel1)

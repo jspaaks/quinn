@@ -13,6 +13,6 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 
 add_subdirectory(${PROJECT_ROOT}/src/primes)
-add_subdirectory(${PROJECT_ROOT}/src/parallel)
+add_subdirectory(${PROJECT_ROOT}/src/parallel1)
 add_subdirectory(${PROJECT_ROOT}/src/parallel2)
 add_subdirectory(${PROJECT_ROOT}/src/serial)
