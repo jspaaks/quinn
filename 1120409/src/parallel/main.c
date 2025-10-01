@@ -6,18 +6,9 @@
 #include <sys/param.h>
 #include "primes/primes.h"
 
-#define VERBOSE
+//#define VERBOSE
 
 int main (int argc, char * argv[]) {
-    if (argc != 1) {
-        fprintf(stderr,
-                "Usage: %s\n"
-                "\n"
-                "    Determine the maximum gap between adjacent primes in the\n"
-                "    interval [2..N]\n", argv[0]);
-        return EXIT_FAILURE;
-    }
-
     int irank;
     int nranks;
 
@@ -25,14 +16,41 @@ int main (int argc, char * argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &irank);
     MPI_Comm_size(MPI_COMM_WORLD, &nranks);
 
-    const uint32_t ncols = 4;
-    const uint32_t imax = 23;
-    const uint32_t blocksz = nranks * ncols;
-    const uint32_t nblocks = (imax + blocksz - 1) / blocksz;
-    if (imax < 5) {
-        fprintf(stdout, "imax has to be at least 5, aborting\n");
+    if (argc != 3) {
+        if (irank == 0) {
+            fprintf(stderr,
+                    "Usage: %s NCOLS N\n"
+                    "\n"
+                    "    Determine the maximum gap between adjacent primes in the\n"
+                    "    interval [2..N] using NCOLS numbers per block.\n", argv[0]);
+        }
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
+
+    const uint32_t ncols = atoll(argv[1]);
+    if (ncols == 0) {
+        if (irank == 0) {
+            fprintf(stderr, "Invalid value for NCOLS, aborting.\n");
+        }
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    }
+
+    const uint32_t imax = atoll(argv[2]);
+    if (imax == 0) {
+        if (irank == 0) {
+            fprintf(stderr, "Invalid value for N, aborting.\n");
+        }
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    }
+    if (imax < 5) {
+        if (irank == 0) {
+            fprintf(stderr, "N has to be at least 5, aborting\n");
+        }
+        MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
+    }
+
+    const uint32_t blocksz = nranks * ncols;
+    const uint32_t nblocks = (imax + blocksz - 1) / blocksz;
 
 #ifdef VERBOSE
     if (irank == 0) {

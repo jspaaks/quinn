@@ -32,6 +32,18 @@ $ cmake --install .
 Subsequently running the programs should output something like:
 
 ```text
+$ time ./dist/bin/serial 1000000
+Max gap between adjacent primes in range [2..1000000] was 114.
+
+real    1m43.198s
+user    1m43.185s
+sys     0m0.005s
+$ time mpirun -np 0 ./dist/bin/parallel 1000 1000000
+The maximum gap between two adjancent primes in interval [2..1000000] is: 114
+
+real    0m42.024s
+user    2m45.162s
+sys     0m0.131s
 ```
 
 ## Acknowledgements
