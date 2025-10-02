@@ -24,7 +24,7 @@ int main (int argc, char * argv[]) {
             count_lcl++;
         }
     }
-    uint32_t count_gbl = 0; 
+    uint32_t count_gbl = 0;
     MPI_Reduce(&count_lcl, &count_gbl, 1, MPI_UINT32_T, MPI_SUM, 0, MPI_COMM_WORLD);
     if (irank == 0) {
         fprintf(stdout, "Found %" PRIu32 " valid identifiers\n", count_gbl);
