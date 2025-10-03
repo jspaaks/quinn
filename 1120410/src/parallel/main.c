@@ -15,12 +15,12 @@ int main (int argc, char * argv[]) {
 
     const size_t n = 1000000;
     const size_t ndigits = 6;
-    char identifier[7] = {};
+    char buf[7] = {};
+    char * identifier = &buf[0];
     uint32_t count_lcl = 0;
     for (size_t i = irank; i < n; i += nranks) {
-        sprintf(&identifier[0], "%06zu", i);
-        bool b = isvalid(&identifier[0], ndigits);
-        if (b) {
+        sprintf(identifier, "%06zu", i);
+        if (isvalid(identifier, ndigits)) {
             count_lcl++;
         }
     }
