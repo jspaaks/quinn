@@ -1,4 +1,4 @@
-# exercise 4.11 numerical integration with rectangle rule
+# exercise 4.11 approximation of pi using rectangle rule
 
 ## Requirements
 
