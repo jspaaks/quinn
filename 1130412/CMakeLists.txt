@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.23...3.28)
 
 project(project LANGUAGES C)
 
+include(CTest)
+enable_testing()
+
 set(PROJECT_ROOT ${CMAKE_CURRENT_LIST_DIR})
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -15,4 +18,6 @@ endif()
 add_subdirectory(${PROJECT_ROOT}/src/equation)
 add_subdirectory(${PROJECT_ROOT}/src/parallel)
 add_subdirectory(${PROJECT_ROOT}/src/serial)
-
+if(BUILD_TESTING)
+    add_subdirectory(${PROJECT_ROOT}/src/test)
+endif()
