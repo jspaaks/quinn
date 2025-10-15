@@ -17,24 +17,24 @@ elseif(UNIX)
     list(APPEND CMAKE_INSTALL_RPATH $ORIGIN/../lib)
 endif()
 
-add_executable(tgt_exe_test)
+add_executable(tgt_exe_test_equation)
 
-set_property(TARGET tgt_exe_test PROPERTY OUTPUT_NAME test)
+set_property(TARGET tgt_exe_test_equation PROPERTY OUTPUT_NAME test_equation)
 
 target_compile_definitions(
-    tgt_exe_test
+    tgt_exe_test_equation
     PRIVATE
         $<$<CONFIG:Debug>:DEBUG>
 )
 
 target_compile_features(
-    tgt_exe_test
+    tgt_exe_test_equation
     PRIVATE
         c_std_23
 )
 
 target_compile_options(
-    tgt_exe_test
+    tgt_exe_test_equation
     PRIVATE
         -Wall
         -Wextra
@@ -46,28 +46,28 @@ target_compile_options(
 )
 
 target_link_libraries(
-    tgt_exe_test
+    tgt_exe_test_equation
     PRIVATE
         tgt_lib_equation
         criterion
 )
  
 target_link_options(
-    tgt_exe_test
+    tgt_exe_test_equation
     PRIVATE
         -pie
 )
 
 target_sources(
-    tgt_exe_test
+    tgt_exe_test_equation
     PRIVATE
-        ${PROJECT_ROOT}/src/test/main.c
+        ${PROJECT_ROOT}/src/test/test_equation.c
 )
 
-install(TARGETS tgt_exe_test)
+install(TARGETS tgt_exe_test_equation)
 
 add_test(
-    NAME test
-    COMMAND ${CMAKE_INSTALL_PREFIX}/bin/test
+    NAME test_equation
+    COMMAND ${CMAKE_INSTALL_PREFIX}/bin/test_equation
     WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}
 )
