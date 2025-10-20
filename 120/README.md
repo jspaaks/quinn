@@ -36,8 +36,8 @@ Subsequently running the test program should output something like:
 
 ```text
 $ ctest
-    Start 1: test_blkdecomp
-1/1 Test #1: test_blkdecomp ...................   Passed    0.60 sec
+    Start 1: test_blkdcmp
+1/1 Test #1: test_blkdcmp .....................   Passed    0.60 sec
 
 100% tests passed, 0 tests failed out of 1
 
