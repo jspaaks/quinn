@@ -29,7 +29,7 @@ target_compile_options(
 target_include_directories(
     tgt_exe_test_blkdcmp
     PRIVATE
-        ../include
+        ../../include
 )
 
 target_link_libraries(

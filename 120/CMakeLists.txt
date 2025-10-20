@@ -13,7 +13,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "../dist")
+    set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE "${CMAKE_BINARY_DIR}/dist")
 endif()
 
 if (APPLE)
@@ -30,8 +30,8 @@ else()
     option(BLKDCMP_BUILD_TESTING "Whether to build the libblkdcmp tests" OFF)
 endif()
 
-add_subdirectory(lib/blkdcmp)
+add_subdirectory(src/blkdcmp)
 
 if(BLKDCMP_BUILD_TESTING)
-    add_subdirectory(bin/test_blkdcmp)
+    add_subdirectory(test/blkdcmp)
 endif()
