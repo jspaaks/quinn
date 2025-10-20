@@ -23,7 +23,7 @@ configuration for building with CMake:
 $ cd build/
 
 # generate the build files
-$ cmake ../src
+$ cmake ..
 
 # build the project
 $ cmake --build .
