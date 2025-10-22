@@ -31,13 +31,20 @@ target_compile_options(
         -fPIC
         $<$<CONFIG:Debug>:-g>
         $<$<CONFIG:Debug>:-O0>
+        $<$<BOOL:${BLKDCMP_WITH_ASAN}>:-fsanitize=address>
         $<$<CONFIG:Release>:-Werror>
 )
 
 target_include_directories(
     tgt_lib_blkdcmp
-    PUBLIC
+    PRIVATE
         ../../include
+)
+
+target_link_options(
+    tgt_lib_blkdcmp
+    PRIVATE
+        $<$<BOOL:${BLKDCMP_WITH_ASAN}>:-fsanitize=address>
 )
 
 target_sources(
@@ -46,13 +53,13 @@ target_sources(
         blkdcmp.c
     PUBLIC
         FILE_SET fset_lib_blkdcmp_headers
-        TYPE HEADERS
-        BASE_DIRS
-            ../../include
-            ${CMAKE_BINARY_DIR}/include                     # contains CMake-generated file
-        FILES
-            ../../include/blkdcmp/blkdcmp.h
-            ${CMAKE_BINARY_DIR}/include/blkdcmp/export.h  # CMake-generated file
+            TYPE HEADERS
+            BASE_DIRS
+                ../../include
+                ${CMAKE_BINARY_DIR}/include  # contains cmake-generated file
+            FILES
+                ../../include/blkdcmp/blkdcmp.h
+                ${CMAKE_BINARY_DIR}/include/blkdcmp/export.h  # cmake-generated file
 )
 
 install(TARGETS tgt_lib_blkdcmp

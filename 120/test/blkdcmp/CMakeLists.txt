@@ -6,7 +6,6 @@ target_compile_definitions(
     tgt_exe_test_blkdcmp
     PRIVATE
         $<$<CONFIG:Debug>:DEBUG>
-        $<$<CONFIG:Release>:NDEBUG>
 )
 
 target_compile_features(
@@ -29,14 +28,14 @@ target_compile_options(
 target_include_directories(
     tgt_exe_test_blkdcmp
     PRIVATE
-        ../../include
+        ../include
 )
 
 target_link_libraries(
     tgt_exe_test_blkdcmp
     PRIVATE
-        tgt_lib_blkdcmp
         criterion
+        tgt_lib_blkdcmp
 )
 
 target_sources(
@@ -48,10 +47,11 @@ target_sources(
         test_blkdcmp_get_idx_blk_s.c
 )
 
-install(TARGETS tgt_exe_test_blkdcmp)
-
 add_test(
-    NAME test_blkdcmp
-    COMMAND test_blkdcmp
-    WORKING_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}"
+    NAME
+        test_blkdcmp
+    COMMAND
+        ${CMAKE_INSTALL_BINDIR}/test_blkdcmp
 )
+
+install(TARGETS tgt_exe_test_blkdcmp)
