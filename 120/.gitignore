@@ -1,2 +1,3 @@
 /build
-/dist
+/cachegrind.out.*
+/callgrind.out.*
