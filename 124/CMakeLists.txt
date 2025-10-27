@@ -14,4 +14,7 @@ elseif(UNIX)
     list(APPEND CMAKE_INSTALL_RPATH $ORIGIN/../lib)
 endif()
 
-add_subdirectory(src)
+add_subdirectory(third-party/blkdcmp)
+add_subdirectory(src/reference)
+add_subdirectory(src/refactored)
+

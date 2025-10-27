@@ -1,5 +1,3 @@
-[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
-
 # 124
 
 ## CMake
@@ -21,25 +19,14 @@ $ cmake --build .
 $ cmake --install . --prefix dist/
 
 # run the program to see if it works
-$ ./dist/bin/reference
+$ mpirun -np 0 ./dist/bin/reference 1000000
 ```
 
 Should output something like:
 
 ```text
--- test compile definitions
-   DEBUG compile definition has been defined.
-
--- test wether math library was linked
-   sqrt(144) = 12.000000
-
--- test c2x / c23 features
-   0 1 2 3 4
-
--- test own library
-   divide(2, 3) = 0
-   multiply(2, 3) = 6
-
+78498 primes are less than or equal to 1000000
+Total elapsed time:   0.002932
 ```
 
 ## Testing
