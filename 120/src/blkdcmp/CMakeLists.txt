@@ -2,7 +2,6 @@ add_library(tgt_lib_blkdcmp SHARED)
 
 set_property(TARGET tgt_lib_blkdcmp PROPERTY C_VISIBILITY_PRESET hidden)
 set_property(TARGET tgt_lib_blkdcmp PROPERTY OUTPUT_NAME blkdcmp)
-set_property(TARGET tgt_lib_blkdcmp PROPERTY VISIBILITY_INLINES_HIDDEN YES)
 
 generate_export_header(
     tgt_lib_blkdcmp
