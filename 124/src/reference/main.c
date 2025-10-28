@@ -11,7 +11,7 @@ int main (int argc, char *argv[]) {
     double elapsed_time; /* Parallel execution time */
     int    first;        /* Index of first multiple */
     int    global_count; /* Global prime count */
-    int    high_value;   /* Highest value on this proc */
+//    int    high_value;   /* Highest value on this proc */
     int    i;            /*  */
     int    id;           /* Process ID number */
     int    index;        /* Index of current prime */
@@ -46,7 +46,7 @@ int main (int argc, char *argv[]) {
        last elements */
 
     low_value = 2 + BLOCK_LOW(id,p,n-1);
-    high_value = 2 + BLOCK_HIGH(id,p,n-1);
+//    high_value = 2 + BLOCK_HIGH(id,p,n-1);
     size = BLOCK_SIZE(id,p,n-1);
 
     /* Bail out if all the primes used for sieving are
