@@ -25,6 +25,9 @@ target_compile_options(
         $<$<CONFIG:Debug>:-O0>
         $<$<BOOL:${REFERENCE_WITH_ASAN}>:-fsanitize=address>
         $<$<CONFIG:Release>:-Werror>
+        $<$<CONFIG:Release>:-O3>
+        $<$<CONFIG:Release>:-mtune=native>
+        $<$<CONFIG:Release>:-march=native>
 )
 
 target_include_directories(
