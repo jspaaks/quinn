@@ -84,8 +84,16 @@ enable it, configure the build via `ccmake ..`, or via a command line argument w
 $ cmake -DSIEVE_REFERENCE_WITH_ASAN=ON ..
 ```
 
+The CMake variable `SIEVE_REFACTORED_WITH_ASAN` can be used to enable address sanitizing on the
+executable `sieve-refactored`. `SIEVE_REFACTORED_WITH_ASAN`'s value is `OFF` by default. To
+enable it, configure the build via `ccmake ..`, or via a command line argument with:
+
+```console
+$ cmake -DSIEVE_REFACTORED_WITH_ASAN=ON ..
+```
+
 The CMake variable `BLKDCMP_WITH_ASAN` can be used to enable address sanitizing on the
-library `blkdcmp`. `BLKDCMP_WITH_ASAN`'s value is `OFF` by default. To
+library `libblkdcmp.so`. `BLKDCMP_WITH_ASAN`'s value is `OFF` by default. To
 enable it, configure the build via `ccmake ..`, or via a command line argument with:
 
 ```console
