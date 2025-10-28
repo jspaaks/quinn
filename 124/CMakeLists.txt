@@ -4,7 +4,8 @@ project(124 LANGUAGES C)
 
 find_package(MPI REQUIRED)
 
-option(REFERENCE_WITH_ASAN "Whether to enable address sanitizing for executable 'reference'" OFF)
+option(SIEVE_REFERENCE_WITH_ASAN "Whether to enable address sanitizing for executable 'sieve-reference'" OFF)
+option(SIEVE_REFACTORED_WITH_ASAN "Whether to enable address sanitizing for executable 'sieve-refactored'" OFF)
 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 
@@ -17,4 +18,3 @@ endif()
 add_subdirectory(third-party/blkdcmp)
 add_subdirectory(src/reference)
 add_subdirectory(src/refactored)
-

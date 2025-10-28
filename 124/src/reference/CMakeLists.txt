@@ -23,7 +23,7 @@ target_compile_options(
         -fPIE
         $<$<CONFIG:Debug>:-g>
         $<$<CONFIG:Debug>:-O0>
-        $<$<BOOL:${REFERENCE_WITH_ASAN}>:-fsanitize=address>
+        $<$<BOOL:${SIEVE_REFERENCE_WITH_ASAN}>:-fsanitize=address>
         $<$<CONFIG:Release>:-Werror>
         $<$<CONFIG:Release>:-O3>
         $<$<CONFIG:Release>:-mtune=native>
@@ -41,7 +41,7 @@ target_link_options(
     tgt_exe_sieve_reference
     PRIVATE
         -pie
-        $<$<BOOL:${REFERENCE_WITH_ASAN}>:-fsanitize=address>
+        $<$<BOOL:${SIEVE_REFERENCE_WITH_ASAN}>:-fsanitize=address>
 )
 
 target_sources(
