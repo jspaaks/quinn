@@ -17,16 +17,26 @@ $ cmake --build .
 
 # install the project to <repo>/build/dist
 $ cmake --install . --prefix dist/
-
-# run the program to see if it works
-$ mpirun -np 0 ./dist/bin/reference 1000000
 ```
 
-Should output something like:
+Output should be something like:
 
 ```text
+$ mpirun -np 4 ./dist/bin/sieve-reference 1000000
 78498 primes are less than or equal to 1000000
-Total elapsed time:   0.002932
+Total elapsed time:   0.002919
+$ mpirun -np 1 ./dist/bin/sieve-refactored 1000000
+78498 primes are less than or equal to 1000000
+Total elapsed time:   0.013957
+$ mpirun -np 2 ./dist/bin/sieve-refactored 1000000
+78498 primes are less than or equal to 1000000
+Total elapsed time:   0.009711
+$ mpirun -np 3 ./dist/bin/sieve-refactored 1000000
+78498 primes are less than or equal to 1000000
+Total elapsed time:   0.003109
+$ mpirun -np 4 ./dist/bin/sieve-refactored 1000000
+78498 primes are less than or equal to 1000000
+Total elapsed time:   0.002405
 ```
 
 ## Testing
@@ -41,20 +51,20 @@ $ sudo apt install libcriterion3 libcriterion-dev
 Run the tests with
 
 ```console
-$ ./dist/bin/test_operations -j1 --verbose
+$ ./dist/bin/test_blkdcmp -j1 --verbose
 ```
 
-The CMake variable `OPERATIONS_BUILD_TESTING` can be used to build the
+The CMake variable `BLKDCMP_BUILD_TESTING` can be used to build the
 tests.
 
-- When this project is the top project, `OPERATIONS_BUILD_TESTING` inherits the value of
+- When this project is the top project, `BLKDCMP_BUILD_TESTING` inherits the value of
   CTest's `BUILD_TESTING`, which is set to ON by default.
 - When this project is not the top project but instead it is used as a dependency to a parent
   project, the default is to not build the tests. However, building the tests is still possible by
-  setting the `OPERATIONS_BUILD_TESTING` to `ON`, e.g like so:
+  setting the `BLKDCMP_BUILD_TESTING` to `ON`, e.g like so:
 
 ```console
-$ cmake -DOPERATIONS_BUILD_TESTING=ON ..
+$ cmake -DBLKDCMP_BUILD_TESTING=ON ..
 ```
 
 ## Address sanitizing
@@ -66,12 +76,20 @@ To use address sanitizing, you may need to install an extra dependency, e.g. lik
 sudo apt install libasan8
 ```
 
-The CMake variable `REFERENCE_WITH_ASAN` can be used to enable address sanitizing on the
-executable `reference`. `REFERENCE_WITH_ASAN`'s value is `OFF` by default. To
+The CMake variable `SIEVE_REFERENCE_WITH_ASAN` can be used to enable address sanitizing on the
+executable `sieve-reference`. `SIEVE_REFERENCE_WITH_ASAN`'s value is `OFF` by default. To
 enable it, configure the build via `ccmake ..`, or via a command line argument with:
 
 ```console
-$ cmake -DREFERENCE_WITH_ASAN=ON ..
+$ cmake -DSIEVE_REFERENCE_WITH_ASAN=ON ..
+```
+
+The CMake variable `BLKDCMP_WITH_ASAN` can be used to enable address sanitizing on the
+library `blkdcmp`. `BLKDCMP_WITH_ASAN`'s value is `OFF` by default. To
+enable it, configure the build via `ccmake ..`, or via a command line argument with:
+
+```console
+$ cmake -DBLKDCMP_WITH_ASAN=ON ..
 ```
 
 ## Acknowledgements
