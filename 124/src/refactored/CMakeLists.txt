@@ -1,21 +1,21 @@
-add_executable(tgt_exe_refactored)
+add_executable(tgt_exe_sieve_refactored)
 
-set_property(TARGET tgt_exe_refactored PROPERTY OUTPUT_NAME refactored)
+set_property(TARGET tgt_exe_sieve_refactored PROPERTY OUTPUT_NAME sieve-refactored)
 
 target_compile_definitions(
-    tgt_exe_refactored
+    tgt_exe_sieve_refactored
     PRIVATE
         $<$<CONFIG:Debug>:DEBUG>
 )
 
 target_compile_features(
-    tgt_exe_refactored
+    tgt_exe_sieve_refactored
     PRIVATE
         c_std_23
 )
 
 target_compile_options(
-    tgt_exe_refactored
+    tgt_exe_sieve_refactored
     PRIVATE
         -Wall
         -Wextra
@@ -28,20 +28,20 @@ target_compile_options(
 )
 
 target_include_directories(
-    tgt_exe_refactored
+    tgt_exe_sieve_refactored
     PRIVATE
         ../../third-party/blkdcmp/include
         ${CMAKE_BINARY_DIR}/include
 )
 
 target_link_directories(
-    tgt_exe_refactored
+    tgt_exe_sieve_refactored
     PRIVATE
         ${CMAKE_BINARY_DIR}/third-party/blkdcmp/src/blkdcmp/
 )
 
 target_link_libraries(
-    tgt_exe_refactored
+    tgt_exe_sieve_refactored
     PRIVATE
         m
         blkdcmp
@@ -49,16 +49,16 @@ target_link_libraries(
 )
 
 target_link_options(
-    tgt_exe_refactored
+    tgt_exe_sieve_refactored
     PRIVATE
         -pie
         $<$<BOOL:${REFERENCE_WITH_ASAN}>:-fsanitize=address>
 )
 
 target_sources(
-    tgt_exe_refactored
+    tgt_exe_sieve_refactored
     PRIVATE
         main.c
 )
 
-install(TARGETS tgt_exe_refactored)
+install(TARGETS tgt_exe_sieve_refactored)
