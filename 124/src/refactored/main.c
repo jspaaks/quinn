@@ -6,26 +6,30 @@
 #include "blkdcmp/blkdcmp.h"
 
 int main (int argc, char *argv[]) {
-    int    count;        // Prime count on this process
-    double elapsed_time; // Parallel execution time
-    int    first;        // Index of first multiple
-    int    global_count; // Global prime count
-    int    high_value0;  // Highest value on process 0
-    int    index;        // Index of current prime
-    int    irank;        // This process's rank
-    int    low_value;    // Lowest value on this process
-    bool  *isnonprime;   // Portion of 2,...,`n`
-    int    n;            // Determine the number of primes that are smaller than this integer
-    int    nranks;       // Number of processes
-    int    prime;        // Current prime
-    int    nelems;       // Elements in `isnonprime`
 
-    char msg[1001] = {};
+    // global / constant across processes
+    char msg[1001] = {};          // error message buffer
+    int n;                        // maximum integer to include in the sieve
+    int nranks;                   // number of processes
+    int prime;                    // current prime
+
+    // local / variable across processes
+    int count;                    // prime count on this process
+    double elapsed_time;          // parallel execution time
+    int first;                    // index of first multiple of the current prime on this process
+    int irank;                    // this process's rank
+    int low_value;                // integer value corresponding to isnonprime[0] on this process
+    bool * isnonprime = nullptr;  // portion of the sieve handled by this process
+    int nelems;                   // number of elements in `isnonprime` handled by this process
+
+    // local to process 0
+    int count0;                   // accumulated prime count
+    int high_value0;              // integer value corresponding to isnonprime[nelems-1] on process 0
+    int index0;                   // index of current prime
 
     MPI_Init(&argc, &argv);
 
     // Start the timer
-
     MPI_Barrier(MPI_COMM_WORLD);
     elapsed_time = -MPI_Wtime();
 
@@ -37,55 +41,67 @@ int main (int argc, char *argv[]) {
         goto err;
     }
 
+    // get the user input
     n = atoi(argv[1]);
 
-    // Figure out this process's share of the array, as well as the integers represented by the
-    // first element of isnonprime in each process
-    low_value = 2 + blkdcmp_get_idx_blk_s(n-1, nranks, irank);
-    nelems = blkdcmp_get_blk_sz(n-1, nranks, irank);
+    // determine the integer represented by the first element of isnonprime in each process, as well
+    // as the length of isnonprime in each process
+    low_value = blkdcmp_get_idx_blk_s(n+1, nranks, irank);
+    nelems = blkdcmp_get_blk_sz(n+1, nranks, irank);
 
-    // Bail out if all the primes used for sieving are not all held by process 0
-    high_value0 = 2 + blkdcmp_get_idx_blk_e(n-1, nranks, 0);
+    // verify that all primes are contained within the first process, otherwise abort
+    high_value0 = blkdcmp_get_idx_blk_e(n+1, nranks, 0);
     if (high_value0 < (int) sqrt(n)) {
         strncpy(msg, "Too many processes\n", 1000);
         goto err;
     }
 
-    // Allocate this process's share of the array
+    // allocate this process's share of the sieve
     isnonprime = (bool *) calloc(nelems, sizeof(bool));
     if (isnonprime == nullptr) {
-        strncpy(msg, "Cannot allocate enough memory.\n", 1000);
+        strncpy(msg, "Error allocating dynamic memory for isnonprime array.\n", 1000);
         goto err;
     }
-
-    // Start marking elements of 'isnonprime' as nonprime until you get to the prime whose square is
-    // larger than 'n'. Each time you find a new prime, tell the other processes about it using a
-    // broadcast so that they can mark the prime's multiples in their respective 'isnonprime' arrays
     if (irank == 0) {
-        index = 0;
+        isnonprime[0] = true;  // integer 0 is not prime
+        isnonprime[1] = true;  // integer 1 is not prime
+        index0 = 2;            // start assessing at index0 = 2
     }
     prime = 2;
+
+    // Let each process mark its part of the sieve
     do {
-        if (prime * prime > low_value) {
+        if (low_value < prime * prime) {
+            // multiples smaller than prime^2 were already marked in a previous iteration, focus on
+            // identifying the index of prime^2
             first = prime * prime - low_value;
         } else {
+            // multiples larger than prime^2
             if (low_value % prime == 0) {
                 first = 0;
             } else {
                 first = prime - (low_value % prime);
             }
         }
+
+        // starting at the index of the first multiple of the current prime in this process's
+        // isnonprime, mark it and all subsequent multiples as nonprime
         for (int ielem = first; ielem < nelems; ielem += prime) {
             isnonprime[ielem] = true;
         }
+
+        // use only process 0's isnonprime array to determine which index is the next prime
         if (irank == 0) {
-            while (isnonprime[++index]);
-            prime = index + 2;
+            while (isnonprime[++index0]);
+            prime = index0;
         }
+
+        // broadcast the value of the newly found next prime to all other processes
         MPI_Bcast(&prime, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
     } while (prime * prime <= n);
 
-    // Determine the total number of primes found in this process's 'isnonprime' array, and send it
+    // determine the total number of primes found in this process's 'isnonprime' array, and send it
     // to process0 using a reduce operation
     count = 0;
     for (int ielem = 0; ielem < nelems; ielem++) {
@@ -93,14 +109,12 @@ int main (int argc, char *argv[]) {
             count++;
         }
     }
-    MPI_Reduce(&count, &global_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(&count, &count0, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    // Stop the timer
-    elapsed_time += MPI_Wtime();
-
-    // Print the results
+    // print the results
     if (irank == 0) {
-        fprintf(stdout, "%d primes are less than or equal to %d\n", global_count, n);
+        elapsed_time += MPI_Wtime();
+        fprintf(stdout, "%d primes are less than or equal to %d\n", count0, n);
         fprintf(stdout, "Total elapsed time: %10.6f\n", elapsed_time);
     }
     MPI_Finalize();
@@ -112,5 +126,6 @@ err:
         fprintf(stderr, "%s", msg);
     }
     MPI_Finalize();
+    free(isnonprime);
     return EXIT_FAILURE;
 }
