@@ -7,7 +7,7 @@ configuration for building with CMake:
 
 ```console
 # change into the build directory
-$ cd build/
+$ mkdir build && cd build/
 
 # generate the build files
 $ cmake -DCMAKE_BUILD_TYPE=Debug ..
