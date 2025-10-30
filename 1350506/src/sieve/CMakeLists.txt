@@ -6,7 +6,7 @@ target_compile_definitions(
     tgt_exe_sieve
     PRIVATE
         $<$<CONFIG:Debug>:DEBUG>
-        $<$<BOOL:${SIEVE_TRAP}>:-DSIEVE_TRAP>
+        $<$<BOOL:${SIEVE_TRAP_DBG}>:-DSIEVE_TRAP_DBG>
 )
 
 target_compile_features(

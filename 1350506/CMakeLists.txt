@@ -4,7 +4,7 @@ project(124 LANGUAGES C)
 
 find_package(MPI REQUIRED)
 
-option(SIEVE_TRAP "Whether to enable trapping each process for debugger attachment" OFF)
+option(SIEVE_TRAP_DBG "Whether to enable trapping each process for debugger attachment" OFF)
 option(SIEVE_WITH_ASAN "Whether to enable address sanitizing for executable 'sieve'" OFF)
 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
