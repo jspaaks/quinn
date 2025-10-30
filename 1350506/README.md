@@ -23,16 +23,28 @@ $ cmake --build .
 $ cmake --install . --prefix dist/
 ```
 
-<!--
 Output should be something like:
 
 ```text
-$ mpirun -np 1 ./dist/bin/sieve 1000000
-78498 primes are less than or equal to 1000000
-Total elapsed time:   0.013957
-```
+$ ./dist/bin/blkdcmp-demo
+Usage: blkdcmp-demo N NRANKS
+    Illustrate the partitioning of [3,5,..,N] over NRANKS.
 
--->
+$ ./dist/bin/blkdcmp-demo 12 2
+idx      value    owner
+        0        3        0
+        1        5        0
+        2        7        1
+        3        9        1
+        4       11        1
+---------------------------
+
+0: 0..1 (2)
+1: 2..4 (3)
+$ mpirun -np 0 ./dist/bin/sieve 1000000
+78498 primes are less than or equal to 1000000
+Total elapsed time:   0.000772
+```
 
 ## Testing
 
@@ -49,8 +61,7 @@ Run the tests with
 $ ./dist/bin/test_blkdcmp -j1 --verbose
 ```
 
-The CMake variable `BLKDCMP_BUILD_TESTING` can be used to build the
-tests.
+The CMake variable `BLKDCMP_BUILD_TESTING` can be used to build the tests.
 
 - When this project is the top project, `BLKDCMP_BUILD_TESTING` inherits the value of
   CTest's `BUILD_TESTING`, which is set to ON by default.
@@ -85,6 +96,14 @@ enable it, configure the build via `ccmake ..`, or via a command line argument w
 
 ```console
 $ cmake -DBLKDCMP_WITH_ASAN=ON ..
+```
+
+## Debugging
+
+The CMake variable `SIEVE_TRAP_DBG` can be used to trap execution of each spawned process, such that a debugger may be attached to it. `SIEVE_TRAP_DBG`'s value is `OFF` by default. To enable it, configure the build via `ccmake ..`, or via a command line argument with:
+
+```console
+$ cmake -DSIEVE_TRAP_DBG=ON ..
 ```
 
 ## Acknowledgements
