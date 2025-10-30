@@ -16,7 +16,7 @@ int main (int argc, char *argv[]) {
 
     if (argc != 3) {
         fprintf(stderr,
-                "Usage: sieve N NRANKS\n"
+                "Usage: blkdcmp-demo N NRANKS\n"
                 "    Illustrate the partitioning of [3,5,..,N] over NRANKS.\n");
         return EXIT_FAILURE;
     }
