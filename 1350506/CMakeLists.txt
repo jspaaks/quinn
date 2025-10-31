@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.23...3.28 FATAL_ERROR)
 
-project(124 LANGUAGES C)
+project(1350506 LANGUAGES C)
 
 find_package(MPI REQUIRED)
 
