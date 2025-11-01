@@ -184,5 +184,5 @@ err:
 }
 
 int val2idx (int val) {
-    return (int) floor(((float) val - 3) / 2);
+    return (val - 3) / 2;  // truncate
 }
