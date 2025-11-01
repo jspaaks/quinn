@@ -63,6 +63,7 @@ target_sources(
     tgt_exe_sieve
     PRIVATE
         main.c
+        sieving.c
 )
 
 install(TARGETS tgt_exe_sieve)
