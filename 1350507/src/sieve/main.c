@@ -8,13 +8,56 @@
 #endif // SIEVE_TRAP_DBG
 #include "blkdcmp/blkdcmp.h"
 
+/* --------------------------------  function declarations   ------------------------------------ */
 
-// function declarations
+int accumulate_total_number_of_primes (int blk_sz, bool * isnonprime);
+void determine_first (int prime, int low_value, int * first);
+void determine_next_prime (int irank, int * index0, int * prime, bool * isnonprime);
 int idx2val (int idx);
 bool iseven (int v);
+void mark_sieve (int prime, int high_value, int first, int blk_s, bool * isnonprime);
 int val2idx (int val);
 
-// function defitions
+/* ----------------------------------  function defitions   ------------------------------------- */
+
+int accumulate_total_number_of_primes (int blk_sz, bool * isnonprime) {
+    int count = 0;
+    for (int i = 0; i < blk_sz; i++) {
+        if (isnonprime[i] == false) {
+            count++;
+        }
+    }
+    return count;
+}
+
+void determine_first (int prime, int low_value, int * first) {
+    if (prime * prime >= low_value) {
+        // multiples smaller than prime^2 were already marked in a previous iteration,
+        // start at prime * prime
+        *first = prime * prime;
+    } else {
+        // multiples larger than prime * prime
+        if (low_value % prime == 0) {
+            *first = low_value;
+        } else {
+            int tmp = low_value + prime - (low_value % prime);
+            // in case the domain value is even, add one prime distance, because even integers
+            // have no representation in the sieve
+            *first = iseven(tmp) ? tmp + prime : tmp;
+        }
+    }
+}
+
+void determine_next_prime (int irank, int * index0, int * prime, bool * isnonprime) {
+    if (irank == 0) {
+        while (isnonprime[++(*index0)]);
+        *prime = idx2val(*index0);
+    }
+    // broadcast the value of the newly found next prime to all other processes
+    MPI_Bcast(prime, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    return;
+}
+
 int idx2val (int idx) {
     return idx * 2 + 3;
 }
@@ -24,6 +67,24 @@ bool iseven (int v) {
 }
 
 int main (int argc, char *argv[]) {
+
+    MPI_Init(&argc, &argv);
+
+#ifdef SIEVE_TRAP_DBG
+    {
+        volatile bool iswaiting = true;
+        char hostname[256];
+        gethostname(hostname, sizeof(hostname));
+        fprintf(stdout, "PID %d on %s waiting for debugger attach...\n", getpid(), hostname);
+        fflush(stdout);
+        while (iswaiting) {
+            // attach the debugger with gdb --pid <the pid>; once attached the debugger will halt
+            // the program here; use GDB commands to set iswaiting to false, e.g.
+            // (gdb) set var iswaiting = 0;
+            sleep(3);
+        }
+    }
+#endif // SIEVE_TRAP_DBG
 
     // global / constant across processes
     char msg[1001] = {};          // error message buffer
@@ -49,24 +110,6 @@ int main (int argc, char *argv[]) {
     int count0;                   // accumulated prime count
     int high_value0;              // domain value corresponding to isnonprime[nelems-1] on process 0
     int index0;                   // index into isnonprime of current prime
-
-    MPI_Init(&argc, &argv);
-
-#ifdef SIEVE_TRAP_DBG
-    {
-        volatile bool iswaiting = true;
-        char hostname[256];
-        gethostname(hostname, sizeof(hostname));
-        fprintf(stdout, "PID %d on %s waiting for debugger attach...\n", getpid(), hostname);
-        fflush(stdout);
-        while (iswaiting) {
-            // attach the debugger with gdb --pid <the pid>; once attached the debugger will halt
-            // the program here; use GDB commands to set iswaiting to false, e.g.
-            // (gdb) set var iswaiting = 0;
-            sleep(3);
-        }
-    }
-#endif // SIEVE_TRAP_DBG
 
     // Start the timer
     MPI_Barrier(MPI_COMM_WORLD);
@@ -120,48 +163,21 @@ int main (int argc, char *argv[]) {
 
     // Let each process mark its part of the sieve
     do {
-        if (prime * prime >= low_value) {
-            // multiples smaller than prime^2 were already marked in a previous iteration,
-            // start at prime * prime
-            first = prime * prime;
-        } else {
-            // multiples larger than prime * prime
-            if (low_value % prime == 0) {
-                first = low_value;
-            } else {
-                int tmp = low_value + prime - (low_value % prime);
-                // in case the domain value is even, add one prime distance, because even integers
-                // have no representation in the sieve
-                first = iseven(tmp) ? tmp + prime : tmp;
-            }
-        }
+        // determine the domain value of the first element that is a multiple of prime
+        determine_first(prime, low_value, &first);
 
         // starting at the index of the first multiple of the current prime in this process's
         // isnonprime, mark it and all subsequent multiples as nonprime
-        for (int i = first; i <= high_value; i += 2 * prime) {
-            int j = val2idx(i) - blk_s;
-            isnonprime[j] = true;
-        }
+        mark_sieve(prime, high_value, first, blk_s, &isnonprime[0]);
 
-        // use only process 0's isnonprime array to determine which index is the next prime
-        if (irank == 0) {
-            while (isnonprime[++index0]);
-            prime = idx2val(index0);
-        }
-
-        // broadcast the value of the newly found next prime to all other processes
-        MPI_Bcast(&prime, 1, MPI_INT, 0, MPI_COMM_WORLD);
+        // determine the value of the next prime as well as its index0
+        determine_next_prime(irank, &index0, &prime, &isnonprime[0]);
 
     } while (prime * prime <= n);
 
     // determine the total number of primes found in this process's 'isnonprime' array, and send it
     // to process0 using a reduce operation
-    count = 0;
-    for (int i = 0; i < blk_sz; i++) {
-        if (isnonprime[i] == false) {
-            count++;
-        }
-    }
+    count = accumulate_total_number_of_primes (blk_sz, &isnonprime[0]);
     MPI_Reduce(&count, &count0, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
     // print the results
@@ -183,6 +199,13 @@ err:
     return EXIT_FAILURE;
 }
 
+void mark_sieve (int prime, int high_value, int first, int blk_s, bool * isnonprime) {
+    for (int i = first; i <= high_value; i += 2 * prime) {
+        int j = val2idx(i) - blk_s;
+        isnonprime[j] = true;
+    }
+}
+
 int val2idx (int val) {
-    return (int) floor(((float) val - 3) / 2);
+    return (val - 3) / 2;
 }
