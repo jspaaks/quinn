@@ -42,9 +42,13 @@ idx      value    owner
 
 0: 0..1 (2)
 1: 2..4 (3)
+$ rm -r ../build/*
+$ cmake -DCMAKE_BUILD_TYPE=Release -DSIEVE_TRAP_DBG=OFF ..
+$ cmake --build .
+$ cmake --install . --prefix dist
 $ mpirun -np 0 ./dist/bin/sieve 1000000
 78498 primes are less than or equal to 1000000
-Total elapsed time:   0.000772
+Total elapsed time:   0.000406
 ```
 
 ## Testing
