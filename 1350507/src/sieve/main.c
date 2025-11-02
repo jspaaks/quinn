@@ -1,3 +1,9 @@
+/*
+    In this iteration of the parallel implementation of the sieve of Erathostenes, we
+       (1) skip dealing with even integers
+       (2) have each process determine what the next prime is on its own
+*/
+
 #include <math.h>
 #include <mpi.h>
 #include <stdio.h>
@@ -8,6 +14,12 @@
 #endif // SIEVE_TRAP_DBG
 #include "blkdcmp/blkdcmp.h"
 #include "sieving.h"
+
+
+struct pair {
+    int l;
+    int r;
+};
 
 int main (int argc, char *argv[]) {
 
@@ -34,25 +46,23 @@ int main (int argc, char *argv[]) {
     int m;                        // number of odd integers between 3 and n inclusive, i.e. length of the sieve
     int n;                        // domain value corresponding to last element of sieve
     int nranks;                   // number of processes
-    int prime;                    // current prime
 
     // local / variable across processes
-    int blk_e;                    // index into sieve where this process's chunk ends
-    int blk_s;                    // index into sieve where this process's chunk starts
-    int blk_sz;                   // number of elements from sieve that are handled by this process
+    struct pair blk_e;            // index into sieve where this process's chunk ends
+    struct pair blk_s;            // index into sieve where this process's chunk starts
+    struct pair blk_sz;           // number of elements from sieve that are handled by this process
     int count;                    // prime count on this process
     double elapsed_time;          // parallel execution time
-    int first;                    // domain value of first multiple of the current prime on this process
-    int high_value;               // domain value corresponding to isnonprime[blk_e] on this process
+    struct pair first;            // domain value of first multiple of the current prime on this process
+    struct pair high_value;       // domain value corresponding to isnonprime[blk_e] on this process
+    int prime;                    // current prime
+    int index;                    // index into isnonprime of current prime
     int irank;                    // this process's rank
-    int low_value;                // domain value corresponding to isnonprime[0] on this process
+    struct pair low_value;        // domain value corresponding to isnonprime[0] on this process
     bool * isnonprime = nullptr;  // portion of the sieve handled by this process
 
     // local to process 0
-    int blk_e0;                   // index into sieve where process 0's chunk ends
     int count0;                   // accumulated prime count
-    int high_value0;              // domain value corresponding to isnonprime[nelems-1] on process 0
-    int index0;                   // index into isnonprime of current prime
 
     // Start the timer
     MPI_Barrier(MPI_COMM_WORLD);
@@ -77,50 +87,67 @@ int main (int argc, char *argv[]) {
     // derive the number of odd integers between 3 and n inclusive, and use the blkdcmp library to
     // determine the starting index, the ending index, and size of each block
     m = val2idx(n) + 1;
-    blk_s = blkdcmp_get_idx_blk_s(m, nranks, irank);
-    blk_e = blkdcmp_get_idx_blk_e(m, nranks, irank);
-    blk_e0 = blkdcmp_get_idx_blk_e(m, nranks, 0);
-    blk_sz = blkdcmp_get_blk_sz(m, nranks, irank);
+    blk_s = (struct pair){
+        .l = blkdcmp_get_idx_blk_s(m, nranks, 0),
+        .r = blkdcmp_get_idx_blk_s(m, nranks, irank)
+    };
+    blk_e = (struct pair){
+        .l = blkdcmp_get_idx_blk_e(m, nranks, 0),
+        .r = blkdcmp_get_idx_blk_e(m, nranks, irank)
+    };
+    blk_sz = (struct pair){
+        .l = blkdcmp_get_blk_sz(m, nranks, 0),
+        .r = blkdcmp_get_blk_sz(m, nranks, irank)
+    };
 
     // determine the domain value corresponding to the first element of isnonprime in each process
-    low_value = idx2val(blk_s);
-    high_value = idx2val(blk_e);
+    low_value = (struct pair){
+        .l = idx2val(blk_s.l),
+        .r = idx2val(blk_s.r)
+    };
+    high_value = (struct pair){
+        .l = idx2val(blk_e.l),
+        .r = idx2val(blk_e.r)
+    };
 
     // verify that all primes are contained within the first process, otherwise abort
-    high_value0 = idx2val(blk_e0);
-    if (high_value0 < (int) sqrt(n)) {
+    if (high_value.l < (int) sqrt(n)) {
         strncpy(msg, "Too many processes\n", 1000);
         goto err;
     }
 
     // allocate this process's share of the sieve
-    isnonprime = (bool *) calloc(blk_sz, sizeof(bool));
+    isnonprime = (bool *) calloc(blk_sz.l + blk_sz.r, sizeof(bool));
     if (isnonprime == nullptr) {
         strncpy(msg, "Error allocating dynamic memory for isnonprime array.\n", 1000);
         goto err;
     }
 
     // the first index of the sieve that we want to consider is 0, which corresponds to domain value 3
-    index0 = 0;
-    prime = idx2val(index0);
+    index = 0;
+    prime = idx2val(index);
 
     // Let each process mark its part of the sieve
     do {
-        // determine the domain value of the first element that is a multiple of prime
-        determine_first(prime, low_value, &first);
+        // determine the domain value of the first element that is a multiple of prime, in both the
+        // left and the right block of isnonprime
+        determine_first(prime, low_value.l, &first.l);
+        determine_first(prime, low_value.r, &first.r);
 
-        // starting at the index of the first multiple of the current prime in this process's
-        // isnonprime, mark it and all subsequent multiples as nonprime
-        mark_sieve(prime, high_value, first, blk_s, &isnonprime[0]);
+        // starting at the index of the first multiple of the current prime of isnonprime, mark it
+        // and all subsequent multiples as nonprime, in both the left and the right block of
+        // isnonprime
+        mark_sieve(prime, high_value.l, first.l, blk_s.l, &isnonprime[0]);
+        mark_sieve(prime, high_value.r, first.r, blk_s.r, &isnonprime[blk_sz.l]);
 
-        // determine the value of the next prime as well as its index0
-        determine_next_prime(irank, &index0, &prime, &isnonprime[0]);
+        // determine the value of the next prime as well as its index
+        determine_next_prime(&isnonprime[0], &index, &prime);
 
     } while (prime * prime <= n);
 
     // determine the total number of primes found in this process's 'isnonprime' array, and send it
     // to process0 using a reduce operation
-    count = accumulate_total_number_of_primes (blk_sz, &isnonprime[0]);
+    count = accumulate_total_number_of_primes(blk_sz.r, &isnonprime[blk_sz.l]);
     MPI_Reduce(&count, &count0, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
     // print the results

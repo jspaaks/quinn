@@ -1,8 +1,7 @@
-#include <mpi.h>
 #include "blkdcmp/blkdcmp.h"
 #include "sieving.h"
 
-int accumulate_total_number_of_primes (int blk_sz, bool * isnonprime) {
+int accumulate_total_number_of_primes (int blk_sz, const bool * isnonprime) {
     int count = 0;
     for (int i = 0; i < blk_sz; i++) {
         if (isnonprime[i] == false) {
@@ -30,13 +29,9 @@ void determine_first (int prime, int low_value, int * first) {
     }
 }
 
-void determine_next_prime (int irank, int * index0, int * prime, bool * isnonprime) {
-    if (irank == 0) {
-        while (isnonprime[++(*index0)]);
-        *prime = idx2val(*index0);
-    }
-    // broadcast the value of the newly found next prime to all other processes
-    MPI_Bcast(prime, 1, MPI_INT, 0, MPI_COMM_WORLD);
+void determine_next_prime (const bool * isnonprime, int * index, int * prime) {
+    while (isnonprime[++(*index)]);
+    *prime = idx2val(*index);
     return;
 }
 
