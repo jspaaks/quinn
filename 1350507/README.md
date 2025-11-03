@@ -48,7 +48,7 @@ $ cmake --build .
 $ cmake --install . --prefix dist
 $ mpirun -np 0 ./dist/bin/sieve 1000000
 78498 primes are less than or equal to 1000000
-Total elapsed time:   0.000406
+Total elapsed time:   0.000254
 ```
 
 ## Testing
