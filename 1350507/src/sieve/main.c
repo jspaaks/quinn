@@ -43,7 +43,7 @@ int main (int argc, char *argv[]) {
 
     // global / constant across processes
     char msg[1001] = {};          // error message buffer
-    int m;                        // number of odd integers between 3 and n inclusive, i.e. length of the sieve
+    struct pair m;                // number of odd integers between 3 and n inclusive, i.e. length of the sieve
     int n;                        // domain value corresponding to last element of sieve
     int nranks;                   // number of processes
 
@@ -86,18 +86,21 @@ int main (int argc, char *argv[]) {
 
     // derive the number of odd integers between 3 and n inclusive, and use the blkdcmp library to
     // determine the starting index, the ending index, and size of each block
-    m = val2idx(n) + 1;
+    m = (struct pair){
+       .l = val2idx((int) floor(sqrt(n)) + 2) + 1,
+       .r = val2idx(n) + 1,
+    };
     blk_s = (struct pair){
-        .l = blkdcmp_get_idx_blk_s(m, nranks, 0),
-        .r = blkdcmp_get_idx_blk_s(m, nranks, irank)
+        .l = 0,
+        .r = blkdcmp_get_idx_blk_s(m.r, nranks, irank)
     };
     blk_e = (struct pair){
-        .l = blkdcmp_get_idx_blk_e(m, nranks, 0),
-        .r = blkdcmp_get_idx_blk_e(m, nranks, irank)
+        .l = m.l - 1,
+        .r = blkdcmp_get_idx_blk_e(m.r, nranks, irank)
     };
     blk_sz = (struct pair){
-        .l = blkdcmp_get_blk_sz(m, nranks, 0),
-        .r = blkdcmp_get_blk_sz(m, nranks, irank)
+        .l = m.l,
+        .r = blkdcmp_get_blk_sz(m.r, nranks, irank)
     };
 
     // determine the domain value corresponding to the first element of isnonprime in each process
@@ -109,12 +112,6 @@ int main (int argc, char *argv[]) {
         .l = idx2val(blk_e.l),
         .r = idx2val(blk_e.r)
     };
-
-    // verify that all primes are contained within the first process, otherwise abort
-    if (high_value.l < (int) sqrt(n)) {
-        strncpy(msg, "Too many processes\n", 1000);
-        goto err;
-    }
 
     // allocate this process's share of the sieve
     isnonprime = (bool *) calloc(blk_sz.l + blk_sz.r, sizeof(bool));
@@ -130,12 +127,12 @@ int main (int argc, char *argv[]) {
     // Let each process mark its part of the sieve
     do {
         // determine the domain value of the first element that is a multiple of prime, in both the
-        // left and the right block of isnonprime
+        // left and the right partition of isnonprime
         determine_first(prime, low_value.l, &first.l);
         determine_first(prime, low_value.r, &first.r);
 
         // starting at the index of the first multiple of the current prime of isnonprime, mark it
-        // and all subsequent multiples as nonprime, in both the left and the right block of
+        // and all subsequent multiples as nonprime, in both the left and the right partition of
         // isnonprime
         mark_sieve(prime, high_value.l, first.l, blk_s.l, &isnonprime[0]);
         mark_sieve(prime, high_value.r, first.r, blk_s.r, &isnonprime[blk_sz.l]);
