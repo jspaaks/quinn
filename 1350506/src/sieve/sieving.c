@@ -1,11 +1,11 @@
 #include "sieving.h"
 #include <mpi.h>
 
-int accumulate_total_number_of_primes (int blk_sz, const bool * isnonprime) {
-    // determine the total number of primes found in this process's 'isnonprime' array
+int accumulate_total_number_of_primes (int blk_sz, const bool * iscomposite) {
+    // determine the total number of primes found in this process's 'iscomposite' array
     int count = 0;
     for (int i = 0; i < blk_sz; i++) {
-        if (isnonprime[i] == false) {
+        if (iscomposite[i] == false) {
             count++;
         }
     }
@@ -31,10 +31,10 @@ void determine_first (int prime, int low_value, int * first) {
     return;
 }
 
-void determine_next_prime (int irank, const bool * isnonprime, int * index0, int * prime) {
-    // use only process 0's isnonprime array to determine which index is the next prime
+void determine_next_prime (int irank, const bool * iscomposite, int * index0, int * prime) {
+    // use only process 0's iscomposite array to determine which index is the next prime
     if (irank == 0) {
-        while (isnonprime[++(*index0)]);
+        while (iscomposite[++(*index0)]);
         *prime = idx2val(*index0);
     }
 
@@ -51,10 +51,10 @@ bool iseven (int v) {
     return v % 2 == 0;
 }
 
-void mark_sieve (int prime, int high_value, int first, int blk_s, bool * isnonprime) {
+void mark_sieve (int prime, int high_value, int first, int blk_s, bool * iscomposite) {
     for (int i = first; i <= high_value; i += 2 * prime) {
         int j = val2idx(i) - blk_s;
-        isnonprime[j] = true;
+        iscomposite[j] = true;
     }
     return;
 }

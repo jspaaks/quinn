@@ -1,10 +1,10 @@
 #include "blkdcmp/blkdcmp.h"
 #include "sieving.h"
 
-int accumulate_total_number_of_primes (int blk_sz, const bool * isnonprime) {
+int accumulate_total_number_of_primes (int blk_sz, const bool * iscomposite) {
     int count = 0;
     for (int i = 0; i < blk_sz; i++) {
-        if (isnonprime[i] == false) {
+        if (iscomposite[i] == false) {
             count++;
         }
     }
@@ -29,8 +29,8 @@ void determine_first (int prime, int low_value, int * first) {
     }
 }
 
-void determine_next_prime (const bool * isnonprime, int * index, int * prime) {
-    while (isnonprime[++(*index)]);
+void determine_next_prime (const bool * iscomposite, int * index, int * prime) {
+    while (iscomposite[++(*index)]);
     *prime = idx2val(*index);
     return;
 }
@@ -43,10 +43,10 @@ bool iseven (int v) {
     return v % 2 == 0;
 }
 
-void mark_sieve (int prime, int high_value, int first, int blk_s, bool * isnonprime) {
+void mark_sieve (int prime, int high_value, int first, int blk_s, bool * iscomposite) {
     for (int i = first; i <= high_value; i += 2 * prime) {
         int j = val2idx(i) - blk_s;
-        isnonprime[j] = true;
+        iscomposite[j] = true;
     }
 }
 

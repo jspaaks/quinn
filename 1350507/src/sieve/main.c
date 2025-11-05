@@ -53,13 +53,13 @@ int main (int argc, char *argv[]) {
     struct pair blk_sz;           // number of elements from sieve that are handled by this process
     int count;                    // prime count on this process
     double elapsed_time;          // parallel execution time
-    struct pair first;            // domain value of first multiple of the current prime on this process
-    struct pair high_value;       // domain value corresponding to isnonprime[blk_e] on this process
+    struct pair first;            // domain value of first composite on this process
+    struct pair high_value;       // domain value corresponding to iscomposite[blk_e] on this process
     int prime;                    // current prime
-    int index;                    // index into isnonprime of current prime
+    int index;                    // index into iscomposite of current prime
     int irank;                    // this process's rank
-    struct pair low_value;        // domain value corresponding to isnonprime[0] on this process
-    bool * isnonprime = nullptr;  // portion of the sieve handled by this process
+    struct pair low_value;        // domain value corresponding to iscomposite[0] on this process
+    bool * iscomposite = nullptr; // portion of the sieve handled by this process
 
     // local to process 0
     int count0;                   // accumulated prime count
@@ -103,7 +103,7 @@ int main (int argc, char *argv[]) {
         .r = blkdcmp_get_blk_sz(m.r, nranks, irank)
     };
 
-    // determine the domain value corresponding to the first element of isnonprime in each process
+    // determine the domain value corresponding to the first element of iscomposite in each process
     low_value = (struct pair){
         .l = idx2val(blk_s.l),
         .r = idx2val(blk_s.r)
@@ -114,9 +114,9 @@ int main (int argc, char *argv[]) {
     };
 
     // allocate this process's share of the sieve
-    isnonprime = (bool *) calloc(blk_sz.l + blk_sz.r, sizeof(bool));
-    if (isnonprime == nullptr) {
-        strncpy(msg, "Error allocating dynamic memory for isnonprime array.\n", 1000);
+    iscomposite = (bool *) calloc(blk_sz.l + blk_sz.r, sizeof(bool));
+    if (iscomposite == nullptr) {
+        strncpy(msg, "Error allocating dynamic memory for iscomposite array.\n", 1000);
         goto err;
     }
 
@@ -127,24 +127,24 @@ int main (int argc, char *argv[]) {
     // Let each process mark its part of the sieve
     do {
         // determine the domain value of the first element that is a multiple of prime, in both the
-        // left and the right partition of isnonprime
+        // left and the right partition of iscomposite
         determine_first(prime, low_value.l, &first.l);
         determine_first(prime, low_value.r, &first.r);
 
-        // starting at the index of the first multiple of the current prime of isnonprime, mark it
+        // starting at the index of the first multiple of the current prime of iscomposite, mark it
         // and all subsequent multiples as nonprime, in both the left and the right partition of
-        // isnonprime
-        mark_sieve(prime, high_value.l, first.l, blk_s.l, &isnonprime[0]);
-        mark_sieve(prime, high_value.r, first.r, blk_s.r, &isnonprime[blk_sz.l]);
+        // iscomposite
+        mark_sieve(prime, high_value.l, first.l, blk_s.l, &iscomposite[0]);
+        mark_sieve(prime, high_value.r, first.r, blk_s.r, &iscomposite[blk_sz.l]);
 
         // determine the value of the next prime as well as its index
-        determine_next_prime(&isnonprime[0], &index, &prime);
+        determine_next_prime(&iscomposite[0], &index, &prime);
 
     } while (prime * prime <= n);
 
-    // determine the total number of primes found in this process's 'isnonprime' array, and send it
+    // determine the total number of primes found in this process's 'iscomposite' array, and send it
     // to process0 using a reduce operation
-    count = accumulate_total_number_of_primes(blk_sz.r, &isnonprime[blk_sz.l]);
+    count = accumulate_total_number_of_primes(blk_sz.r, &iscomposite[blk_sz.l]);
     MPI_Reduce(&count, &count0, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
     // print the results
@@ -155,13 +155,13 @@ int main (int argc, char *argv[]) {
     }
     MPI_Finalize();
 
-    free(isnonprime);
+    free(iscomposite);
     return EXIT_SUCCESS;
 err:
     if (irank == 0) {
         fprintf(stderr, "%s", msg);
     }
     MPI_Finalize();
-    free(isnonprime);
+    free(iscomposite);
     return EXIT_FAILURE;
 }

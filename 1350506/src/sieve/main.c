@@ -42,17 +42,17 @@ int main (int argc, char *argv[]) {
     int blk_sz;                   // number of elements from sieve that are handled by this process
     int count;                    // prime count on this process
     double elapsed_time;          // parallel execution time
-    int first;                    // domain value of first multiple of the current prime on this process
-    int high_value;               // domain value corresponding to isnonprime[blk_e] on this process
+    int first;                    // domain value of first composite on this process
+    int high_value;               // domain value corresponding to iscomposite[blk_e] on this process
     int irank;                    // this process's rank
-    int low_value;                // domain value corresponding to isnonprime[0] on this process
-    bool * isnonprime = nullptr;  // portion of the sieve handled by this process
+    int low_value;                // domain value corresponding to iscomposite[0] on this process
+    bool * iscomposite = nullptr; // portion of the sieve handled by this process
 
     // local to process 0
     int blk_e0;                   // index into sieve where process 0's chunk ends
     int count0;                   // accumulated prime count
-    int high_value0;              // domain value corresponding to isnonprime[nelems-1] on process 0
-    int index0;                   // index into isnonprime of current prime
+    int high_value0;              // domain value corresponding to iscomposite[nelems-1] on process 0
+    int index0;                   // index into iscomposite of current prime
 
     // Start the timer
     MPI_Barrier(MPI_COMM_WORLD);
@@ -82,7 +82,7 @@ int main (int argc, char *argv[]) {
     blk_e0 = blkdcmp_get_idx_blk_e(m, nranks, 0);
     blk_sz = blkdcmp_get_blk_sz(m, nranks, irank);
 
-    // determine the domain value corresponding to the first element of isnonprime in each process
+    // determine the domain value corresponding to the first element of iscomposite in each process
     low_value = idx2val(blk_s);
     high_value = idx2val(blk_e);
 
@@ -94,9 +94,9 @@ int main (int argc, char *argv[]) {
     }
 
     // allocate this process's share of the sieve
-    isnonprime = (bool *) calloc(blk_sz, sizeof(bool));
-    if (isnonprime == nullptr) {
-        strncpy(msg, "Error allocating dynamic memory for isnonprime array.\n", 1000);
+    iscomposite = (bool *) calloc(blk_sz, sizeof(bool));
+    if (iscomposite == nullptr) {
+        strncpy(msg, "Error allocating dynamic memory for iscomposite array.\n", 1000);
         goto err;
     }
 
@@ -111,16 +111,16 @@ int main (int argc, char *argv[]) {
         determine_first (prime, low_value, &first);
 
         // starting at the index of the first multiple of the current prime in this process's
-        // isnonprime, mark it and all subsequent multiples as nonprime
-        mark_sieve (prime, high_value, first, blk_s, &isnonprime[0]);
+        // iscomposite, mark it and all subsequent multiples as nonprime
+        mark_sieve (prime, high_value, first, blk_s, &iscomposite[0]);
 
         // determine the value of the next prime as well as its index0
-        determine_next_prime(irank, &isnonprime[0], &index0, &prime);
+        determine_next_prime(irank, &iscomposite[0], &index0, &prime);
     } while (prime * prime <= n);
 
-    // determine the total number of primes found in this process's 'isnonprime' array, and send it
+    // determine the total number of primes found in this process's 'iscomposite' array, and send it
     // to process0 using a reduce operation
-    count = accumulate_total_number_of_primes (blk_sz, &isnonprime[0]);
+    count = accumulate_total_number_of_primes (blk_sz, &iscomposite[0]);
     MPI_Reduce(&count, &count0, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
     // print the results
@@ -131,13 +131,13 @@ int main (int argc, char *argv[]) {
     }
     MPI_Finalize();
 
-    free(isnonprime);
+    free(iscomposite);
     return EXIT_SUCCESS;
 err:
     if (irank == 0) {
         fprintf(stderr, "%s", msg);
     }
     MPI_Finalize();
-    free(isnonprime);
+    free(iscomposite);
     return EXIT_FAILURE;
 }
