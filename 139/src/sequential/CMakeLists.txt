@@ -27,10 +27,17 @@ target_compile_options(
         $<$<CONFIG:Release>:-Werror>
 )
 
+target_include_directories(
+    tgt_exe_sequential
+    PRIVATE
+        ../../third_party/libidx/include
+)
+
 target_link_libraries(
     tgt_exe_sequential
     PRIVATE
         m
+        tgt_lib_idx
 )
 
 target_link_options(
