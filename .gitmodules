@@ -1,0 +1,3 @@
+[submodule "139/third_party/libidx"]
+	path = 139/third_party/libidx
+	url = https://github.com/jspaaks/libidx.git
