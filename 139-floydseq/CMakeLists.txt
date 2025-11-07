@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.23...3.28 FATAL_ERROR)
 
 project(139 LANGUAGES C)
 
-option(SEQUENTIAL_WITH_ASAN "Whether to enable address sanitizing for executable 'sequential'" OFF)
+option(FLOYDSEQ_WITH_ASAN "Whether to enable address sanitizing for executable 'floydseq'" OFF)
 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
 
@@ -13,5 +13,5 @@ elseif(UNIX)
 endif()
 
 add_subdirectory(third_party/libidx)
-add_subdirectory(src/sequential)
+add_subdirectory(src/floydseq)
 
