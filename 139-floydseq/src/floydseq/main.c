@@ -13,9 +13,6 @@ void show_help(const char * argv[]);
 static constexpr uint8_t basically_inf = 0x63;
 
 void calc_floyd (uint32_t n, uint8_t ** mat) {
-    fprintf(stdout, "adjacency matrix:\n");
-    print_matrix(n, (const uint8_t **) mat);
-    fprintf(stdout, "\n\n");
     for (uint32_t ivia = 0; ivia < n; ivia++) {
         for (uint32_t isrc = 0; isrc < n; isrc++) {
             for (uint32_t idst = 0; idst < n; idst++) {
@@ -24,9 +21,6 @@ void calc_floyd (uint32_t n, uint8_t ** mat) {
                 mat[isrc][idst] = MIN(direct, detour);
             }
         }
-        fprintf(stdout, "shortest path length after ivia=%d%s:\n", ivia, ivia == n - 1 ? " (final)" : "");
-        print_matrix(n, (const uint8_t **) mat);
-        fprintf(stdout, "\n\n");
     }
 }
 
@@ -49,8 +43,17 @@ int main (int argc, const char * argv[]) {
         mat[irow] = &body[irow * ncols];
     }
 
-    fprintf(stdout, "Example of Floyd's algorithm\n\n");
+    fprintf(stdout, "\nExample of Floyd's algorithm\n\n");
+    fprintf(stdout, "adjacency matrix:\n");
+    print_matrix(nrows, (const uint8_t **) mat);
+    fprintf(stdout, "\n");
+
     calc_floyd(header.lengths[0], mat);
+
+    fprintf(stdout, "shortest-path matrix:\n");
+    print_matrix(nrows, (const uint8_t **) mat);
+    fprintf(stdout, "\n");
+
     idx_free_body((void **) &body);
     free(mat);
     return EXIT_SUCCESS;
@@ -74,7 +77,8 @@ void print_matrix(uint32_t n, const uint8_t ** mat) {
 void show_help (const char * argv[]) {
     fprintf(stderr,
             "Usage: %s FILEPATH\n"
-            "    Read a directed acyclic graph's adjacency matrix from FILEPATH and\n"
-            "    use Floyd's algorithm to determine the shortest-path matrix.\n"
+            "    Read a directed acyclic graph's adjacency matrix from FILEPATH\n"
+            "    and use Floyd's algorithm to determine the shortest-path\n"
+            "    matrix. FILEPATH should point to a binary file in IDX format.\n"
             , argv[0]);
 }
