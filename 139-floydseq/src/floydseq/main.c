@@ -52,6 +52,7 @@ int main (int argc, const char * argv[]) {
     fprintf(stdout, "Example of Floyd's algorithm\n\n");
     calc_floyd(header.lengths[0], mat);
     idx_free_body((void **) &body);
+    free(mat);
     return EXIT_SUCCESS;
 
 }
