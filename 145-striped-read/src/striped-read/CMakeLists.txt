@@ -50,6 +50,7 @@ target_sources(
     tgt_exe_striped_read
     PRIVATE
         main.c
+        rows_reader.c
 )
 
 install(TARGETS tgt_exe_striped_read)
