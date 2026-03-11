@@ -6,7 +6,7 @@ target_compile_definitions(
     tgt_exe_floyd_par
     PRIVATE
         $<$<CONFIG:Debug>:DEBUG>
-        $<$<BOOL:${STRIPED_READ_TRAP_DBG}>:-DSTRIPED_READ_TRAP_DBG>
+        $<$<BOOL:${FLOYD_PAR_TRAP_DBG}>:-DFLOYD_PAR_TRAP_DBG>
 )
 
 target_compile_features(
@@ -24,7 +24,7 @@ target_compile_options(
         -fPIE
         $<$<CONFIG:Debug>:-g>
         $<$<CONFIG:Debug>:-O0>
-        $<$<BOOL:${STRIPED_READ_WITH_ASAN}>:-fsanitize=address>
+        $<$<BOOL:${FLOYD_PAR_WITH_ASAN}>:-fsanitize=address>
         $<$<CONFIG:Release>:-Werror>
         $<$<CONFIG:Release>:-O3>
         $<$<CONFIG:Release>:-mtune=native>
@@ -43,7 +43,7 @@ target_link_options(
     tgt_exe_floyd_par
     PRIVATE
         -pie
-        $<$<BOOL:${STRIPED_READ_WITH_ASAN}>:-fsanitize=address>
+        $<$<BOOL:${FLOYD_PAR_WITH_ASAN}>:-fsanitize=address>
 )
 
 target_sources(
