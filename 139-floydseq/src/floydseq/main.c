@@ -43,7 +43,7 @@ int main (int argc, const char * argv[]) {
         mat[irow] = &body[irow * ncols];
     }
 
-    fprintf(stdout, "\nExample of Floyd's algorithm\n\n");
+    fprintf(stdout, "\nExample of Floyd's algorithm -- sequential implementation\n\n");
     fprintf(stdout, "adjacency matrix:\n");
     print_matrix(nrows, (const uint8_t **) mat);
     fprintf(stdout, "\n");
