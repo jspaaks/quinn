@@ -62,7 +62,9 @@ $ cmake -DSTRIPED_READ_WITH_ASAN=ON ..
 
 ## Debugging
 
-The CMake variable `STRIPED_READ_TRAP_DBG` can be used to trap execution of each spawned process, such that a debugger may be attached to it. `STRIPED_READ_TRAP_DBG`'s value is `OFF` by default. To enable it, configure the build via `ccmake ..`, or via a command line argument with:
+The CMake variable `STRIPED_READ_TRAP_DBG` can be used to trap execution of each spawned process,
+such that a debugger may be attached to it. `STRIPED_READ_TRAP_DBG`'s value is `OFF` by default. To
+enable it, configure the build via `ccmake ..`, or via a command line argument with:
 
 ```console
 $ cmake -DSTRIPED_READ_TRAP_DBG=ON ..
