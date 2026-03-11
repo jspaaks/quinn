@@ -1,4 +1,4 @@
-# 139-floydseq
+# 139-floyd-seq
 
 ## CMake
 
@@ -22,12 +22,12 @@ $ cmake --install . --prefix dist/
 Running the program should output something like:
 
 ```text
-$ ./dist/bin/floydseq
-Usage: ./dist/bin/floydseq FILEPATH
+$ ./dist/bin/floyd-seq
+Usage: ./dist/bin/floyd-seq FILEPATH
     Read a directed acyclic graph's adjacency matrix from FILEPATH
     and use Floyd's algorithm to determine the shortest-path
     matrix. FILEPATH should point to a binary file in IDX format.
-$ ./dist/bin/floydseq ../data/adjacency.idx
+$ ./dist/bin/floyd-seq ../data/adjacency.idx
 
 Example of Floyd's algorithm
 
@@ -58,12 +58,12 @@ To use address sanitizing, you may need to install an extra dependency, e.g. lik
 sudo apt install libasan8
 ```
 
-The CMake variable `FLOYDSEQ_WITH_ASAN` can be used to enable address sanitizing on the
-executable `floydseq`. `FLOYDSEQ_WITH_ASAN`'s value is `OFF` by default. To
+The CMake variable `FLOYD_SEQ_WITH_ASAN` can be used to enable address sanitizing on the
+executable `floyd-seq`. `FLOYD_SEQ_WITH_ASAN`'s value is `OFF` by default. To
 enable it, configure the build via `ccmake ..`, or via a command line argument with:
 
 ```console
-$ cmake -DFLOYDSEQ_WITH_ASAN=ON ..
+$ cmake -DFLOYD_SEQ_WITH_ASAN=ON ..
 ```
 
 ## Acknowledgements
