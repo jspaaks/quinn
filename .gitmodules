@@ -4,3 +4,6 @@
 [submodule "145-striped-read/third-party/libidx"]
 	path = 145_striped_read/third_party/libidx
 	url = https://github.com/jspaaks/libidx.git
+[submodule "149_floyd_par/third_party/libblkdcmp"]
+	path = 149_floyd_par/third_party/libblkdcmp
+	url = https://github.com/jspaaks/libblkdcmp.git
