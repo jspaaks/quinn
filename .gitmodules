@@ -7,3 +7,6 @@
 [submodule "149_floyd_par/third_party/libblkdcmp"]
 	path = 149_floyd_par/third_party/libblkdcmp
 	url = https://github.com/jspaaks/libblkdcmp.git
+[submodule "149_floyd_par/third_party/libidx"]
+	path = 149_floyd_par/third_party/libidx
+	url = https://github.com/jspaaks/libidx.git
