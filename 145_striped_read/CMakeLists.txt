@@ -16,5 +16,5 @@ elseif(UNIX)
 endif()
 
 add_subdirectory(third_party/blkdcmp)
-add_subdirectory(third_party/idx)
+add_subdirectory(third_party/libidx)
 add_subdirectory(src/striped_read)
