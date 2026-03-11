@@ -6,8 +6,6 @@
 #include <stdlib.h>
 
 struct rows_reader {
-    const char * filepath;
-    MPI_Comm mpi_comm;
     uint8_t * buffer;
     uint8_t ** matrix;
 };
@@ -27,36 +25,27 @@ size_t rows_reader_get_size (void) {
     return sizeof(struct rows_reader);
 }
 
-void rows_reader_init (struct rows_reader * self, const char * filepath, MPI_Comm mpi_comm) {
-    *self = (struct rows_reader) {
-        .filepath = filepath,
-        .mpi_comm = mpi_comm,
-        .buffer = nullptr,
-        .matrix = nullptr,
-    };
-}
-
 struct rows_reader * rows_reader_new (void) {
-    struct rows_reader * reader = (struct rows_reader *) malloc(1 * sizeof(struct rows_reader));
+    struct rows_reader * reader = (struct rows_reader *) calloc(1, sizeof(struct rows_reader));
     if (reader == nullptr) {
         fprintf(stderr, "Error allocating memory for struct rows_reader, aborting.\n");
         exit(1);
-    }   
+    }
     return reader;
 }
 
-void rows_reader_read (struct rows_reader * self) {
-    int irank = 0;
-    int nranks = 0;
+void rows_reader_read (struct rows_reader * self, const char * filepath, MPI_Comm mpi_comm) {
+    int irank = -1;
+    int nranks = -1;
 
     // figure out how many ranks there are and which i am
-    MPI_Comm_rank(self->mpi_comm, &irank);
-    MPI_Comm_size(self->mpi_comm, &nranks);
+    MPI_Comm_rank(mpi_comm, &irank);
+    MPI_Comm_size(mpi_comm, &nranks);
 
     // use the last process to read the metadata
     IdxHeader header = {};
     if (irank == nranks - 1) {
-        header = idx_read_header(self->filepath);
+        header = idx_read_header(filepath);
     }
 
     // broadcast the header to the other processes
@@ -77,7 +66,7 @@ void rows_reader_read (struct rows_reader * self) {
 
     if (irank == nranks - 1) {
         // open the IDX file with the adjacency matrix
-        FILE * stream = fopen(self->filepath, "rb");
+        FILE * stream = fopen(filepath, "rb");
         // move the cursor to the beginning of the data
         fseek(stream, header.bodystart, SEEK_SET);
         // read blocks of data and send it to the target process 0..n-2
