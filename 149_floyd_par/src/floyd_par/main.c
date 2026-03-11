@@ -57,8 +57,17 @@ int main (int argc, char *argv[]) {
     Stripe * stripe = stripe_new();
     stripe_read(stripe, filepath, MPI_COMM_WORLD);
 
-    // presumably, each process would do something useful with
-    // its slice of the data in rows.buffer here
+    int ncolsg = (int) stripe_get_ncolsg(stripe);
+    int irow0 = (int) stripe_get_irow0(stripe);
+    int irown = (int) stripe_get_irown(stripe);
+
+    for (int ivia = 0; ivia < ncolsg; ivia++) {
+        for (int isrc = irow0; isrc <= irown; isrc++) {
+            for (int idst = 0; idst < ncolsg; idst++) {
+                fprintf(stdout, "(%d) %d-%d-%d\n", irank, isrc, ivia, idst);
+            }
+        }
+    }
 
     // free resources
     stripe_delete(&stripe);
