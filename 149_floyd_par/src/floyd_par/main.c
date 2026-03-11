@@ -17,8 +17,6 @@
 typedef struct stripe Stripe;
 
 int main (int argc, char *argv[]) {
-    MPI_Init(&argc, &argv);
-
 #ifdef FLOYD_PAR_TRAP_DBG
     {
         volatile bool iswaiting = true;
@@ -34,6 +32,8 @@ int main (int argc, char *argv[]) {
         }
     }
 #endif // FLOYD_PAR_TRAP_DBG
+
+    MPI_Init(&argc, &argv);
 
     int irank = -1;
     int nranks = -1;
