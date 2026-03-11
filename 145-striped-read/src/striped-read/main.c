@@ -35,8 +35,8 @@ int main (int argc, char *argv[]) {
     }
 #endif // STRIPED_READ_TRAP_DBG
 
-    int irank = 0;
-    int nranks = 0;
+    int irank = -1;
+    int nranks = -1;
 
     MPI_Comm_rank(MPI_COMM_WORLD, &irank);
     MPI_Comm_size(MPI_COMM_WORLD, &nranks);
@@ -46,7 +46,7 @@ int main (int argc, char *argv[]) {
             fprintf(stderr,
                     "Usage: striped-read FILEPATH\n"
                     "    Read IDX formatted adjacency matrix from FILEPATH and distribute\n"
-                    "    stripes of it to other processes.");
+                    "    stripes of it to other processes.\n");
         }
         MPI_Finalize();
         return EXIT_FAILURE;
@@ -54,10 +54,10 @@ int main (int argc, char *argv[]) {
 
     const char * filepath = argv[1];
     RowsReader * reader = rows_reader_new();
-    rows_reader_init(reader, filepath, MPI_COMM_WORLD);
-    rows_reader_read(reader);
+    rows_reader_read(reader, filepath, MPI_COMM_WORLD);
 
-    // presumably, you'd do something useful with the contents of reader.buffer here
+    // presumably, each process would do something useful with
+    // its slice of the data in reader.buffer here
 
     // free resources
     rows_reader_delete(&reader);
