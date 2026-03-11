@@ -1,6 +1,6 @@
 add_executable(tgt_exe_striped_read)
 
-set_property(TARGET tgt_exe_striped_read PROPERTY OUTPUT_NAME striped_read)
+set_property(TARGET tgt_exe_striped_read PROPERTY OUTPUT_NAME striped-read)
 
 target_compile_definitions(
     tgt_exe_striped_read
