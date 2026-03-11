@@ -1,5 +1,5 @@
 [submodule "139-floydseq/third_party/libidx"]
-	path = 139-floyd-seq/third_party/libidx
+	path = 139_floyd_seq/third_party/libidx
 	url = https://github.com/jspaaks/libidx.git
 [submodule "145-striped-read/third-party/idx"]
 	path = 145-striped-read/third-party/idx
