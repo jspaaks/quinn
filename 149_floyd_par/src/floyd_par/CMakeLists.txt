@@ -50,7 +50,7 @@ target_sources(
     tgt_exe_floyd_par
     PRIVATE
         main.c
-        rows_reader.c
+        stripe.c
 )
 
 install(TARGETS tgt_exe_floyd_par)

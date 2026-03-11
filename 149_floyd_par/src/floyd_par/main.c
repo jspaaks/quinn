@@ -4,7 +4,7 @@
 
 #include "blkdcmp/blkdcmp.h"
 #include "idx/idx.h"
-#include "rows_reader.h"
+#include "stripe.h"
 #include <inttypes.h>
 #include <mpi.h>
 #include <stdint.h>
@@ -14,7 +14,7 @@
 #include <unistd.h>
 #endif // FLOYD_PAR_TRAP_DBG
 
-typedef struct rows Rows;
+typedef struct stripe Stripe;
 
 int main (int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
@@ -54,14 +54,14 @@ int main (int argc, char *argv[]) {
     }
 
     const char * filepath = argv[1];
-    Rows * rows = rows_reader_new();
-    rows_reader_read(rows, filepath, MPI_COMM_WORLD);
+    Stripe * stripe = stripe_new();
+    stripe_read(stripe, filepath, MPI_COMM_WORLD);
 
     // presumably, each process would do something useful with
     // its slice of the data in rows.buffer here
 
     // free resources
-    rows_reader_delete(&rows);
+    stripe_delete(&stripe);
     MPI_Finalize();
 
     return EXIT_SUCCESS;
