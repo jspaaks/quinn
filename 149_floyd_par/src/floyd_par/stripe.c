@@ -5,6 +5,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct stripe {
     uint8_t * buffer;
@@ -36,20 +37,17 @@ uint32_t stripe_get_irown (struct stripe * self) {
     return self->irown;
 }
 
-uint32_t stripe_get_ncolsg (struct stripe * self) {
+uint32_t stripe_get_ncols (struct stripe * self) {
     return self->ncolsg;
 }
 
-uint32_t stripe_get_ncols (struct stripe * self) {
-    return self->ncols;
-}
-
-uint32_t stripe_get_nrowsg (struct stripe * self) {
+uint32_t stripe_get_nrows (struct stripe * self) {
     return self->nrowsg;
 }
 
-uint32_t stripe_get_nrows (struct stripe * self) {
-    return self->nrows;
+uint8_t stripe_get_val (struct stripe * self, uint32_t irowg, uint32_t icolg) {
+    uint32_t irow = irowg - self->irow0;
+    return self->matrix[irow][icolg];
 }
 
 struct stripe * stripe_new (void) {
@@ -61,7 +59,7 @@ struct stripe * stripe_new (void) {
     return reader;
 }
 
-void stripe_read (struct stripe * self, const char * filepath, MPI_Comm mpi_comm) {
+void stripe_read_u8 (struct stripe * self, const char * filepath, MPI_Comm mpi_comm) {
     int irank = -1;
     int nranks = -1;
 
@@ -81,7 +79,18 @@ void stripe_read (struct stripe * self, const char * filepath, MPI_Comm mpi_comm
     self->nrowsg = header.lengths[0];
     self->ncolsg = header.lengths[1];
 
-    assert(self->nrowsg == self->ncolsg && "expected matrix to be square");
+    if (irank == 0 && self->nrowsg != self->ncolsg) {
+        printf("Expected matrix to be square, aborting\n");
+        MPI_Abort(MPI_COMM_WORLD, -1);
+    }
+
+    {
+        bool incorrect_data_type = strcmp(idx_get_type_name(&header), "uint8") != 0;
+        if (irank == 0 && incorrect_data_type) {
+            fprintf(stderr, "Expected data type of '%s' body to be uint8_t, aborting.\n", filepath);
+            MPI_Abort(MPI_COMM_WORLD, -1);
+        }
+    }
 
     // determine the number of rows that are going to be processed by this process
     self->nrows = blkdcmp_get_blk_sz((size_t) self->nrowsg, (size_t) nranks, (size_t) irank);
@@ -118,4 +127,9 @@ void stripe_read (struct stripe * self, const char * filepath, MPI_Comm mpi_comm
         MPI_Status status = {};
         MPI_Recv(self->buffer, self->nrows * self->ncols, MPI_UINT8_T, nranks - 1, 0, MPI_COMM_WORLD, &status);
     }
+}
+
+void stripe_set_val (struct stripe * self, uint32_t irowg, uint32_t icolg, uint8_t val) {
+    uint32_t irow = irowg - self->irow0;
+    self->matrix[irow][icolg] = val;
 }

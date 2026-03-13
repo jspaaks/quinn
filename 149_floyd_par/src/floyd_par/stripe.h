@@ -20,17 +20,14 @@ uint32_t stripe_get_irow0 (struct stripe * self);
 /* returns the row number where this process' slice of the matrix ends (inclusive) */
 uint32_t stripe_get_irown (struct stripe * self);
 
-/* returns the number of cols in this process' slice of the matrix */
+/* returns the number of cols in the entire matrix */
 uint32_t stripe_get_ncols (struct stripe * self);
 
-/* returns the number of cols in the entire matrix */
-uint32_t stripe_get_ncolsg (struct stripe * self);
-
-/* returns the number of rows in this process' slice of the matrix */
+/* returns the number of rows in the entire matrix */
 uint32_t stripe_get_nrows (struct stripe * self);
 
-/* returns the number of rows in the entire matrix */
-uint32_t stripe_get_nrowsg (struct stripe * self);
+/* returns the matrix element value at irow, icol */
+uint8_t stripe_get_val (struct stripe * self, uint32_t irow, uint32_t icol);
 
 /*
  *  dynamically allocate memory for storing an instance of `struct stripe`, and return a
@@ -38,11 +35,13 @@ uint32_t stripe_get_nrowsg (struct stripe * self);
  */
 struct stripe * stripe_new (void);
 
-
 /*
  *  use the highest-rank process to read IDX formatted binary data from file self->filepath, and
  *  send horizontal slices of it to the other processes
  */
-void stripe_read (struct stripe * self, const char * filepath, MPI_Comm mpi_comm);
+void stripe_read_u8 (struct stripe * self, const char * filepath, MPI_Comm mpi_comm);
+
+/* set matrix element at irow, icol to val */
+void stripe_set_val (struct stripe * self, uint32_t irow, uint32_t icol, uint8_t val);
 
 #endif
