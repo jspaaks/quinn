@@ -2,6 +2,7 @@
 #define STRIPE_READER_H_INCLUDED
 #include <mpi.h>
 #include <stddef.h>
+#include <stdio.h>
 
 
 /*  
@@ -34,6 +35,9 @@ uint8_t stripe_get_val (struct stripe * self, uint32_t irow, uint32_t icol);
  *  pointer to it
  */
 struct stripe * stripe_new (void);
+
+/* print the contents of matrix to stream */
+void stripe_print(struct stripe * self, FILE * stream);
 
 /*
  *  use the highest-rank process to read IDX formatted binary data from file self->filepath, and

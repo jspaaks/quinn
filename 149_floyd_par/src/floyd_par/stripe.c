@@ -2,6 +2,7 @@
 #include "idx/idx.h"
 #include "stripe.h"
 #include <assert.h>
+#include <inttypes.h>
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,6 +58,16 @@ struct stripe * stripe_new (void) {
         exit(1);
     }
     return reader;
+}
+
+void stripe_print(struct stripe * self, FILE * stream) {
+    int nrows = (int) self->nrows;
+    int ncols = (int) self->ncols;
+    for (int irow = 0; irow < nrows; irow++) {
+        for (int icol = 0; icol < ncols; icol++) {
+            fprintf(stream, "%3" PRIu8 "%c", self->matrix[irow][icol], icol == ncols - 1 ? '\n' : ' ');
+        }
+    }
 }
 
 void stripe_read_u8 (struct stripe * self, const char * filepath, MPI_Comm mpi_comm) {
