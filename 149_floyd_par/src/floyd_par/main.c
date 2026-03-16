@@ -17,6 +17,8 @@
 
 typedef struct stripe Stripe;
 
+void print_stripes (FILE * stream, MPI_Comm mpi_comm, const Stripe * stripe, const int irank, const int nranks);
+
 int main (int argc, char *argv[]) {
     MPI_Init(&argc, &argv);
 
@@ -54,9 +56,23 @@ int main (int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    if (irank == nranks - 1) {
+        fprintf(stdout, "Parallel implementation of Floyd's algorithm for determining all-pairs\n"
+                "shortest distance based on a adjacency matrix:\n");
+        fflush(stdout);
+    }
+
     const char * filepath = argv[1];
     Stripe * stripe = stripe_new();
     stripe_read_u8(stripe, filepath, MPI_COMM_WORLD);
+
+    // print stripes from different processes with the adjacency values as read from file
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (irank == nranks - 1) {
+        fprintf(stdout, "\nAdjacency matrix:\n");
+        fflush(stdout);
+    }
+    print_stripes(stdout, MPI_COMM_WORLD, stripe, irank, nranks);
 
     int n = (int) stripe_get_ncols(stripe);
     int irow0 = (int) stripe_get_irow0(stripe);
@@ -87,13 +103,13 @@ int main (int argc, char *argv[]) {
         }
     }
 
-    for (int iprint = 0; iprint < nranks; iprint++) {
-        MPI_Barrier(MPI_COMM_WORLD);
-        if (iprint == irank) {
-            stripe_print(stripe, stdout);
-            fflush(stdout);
-        }
+    // print stripes from different processes
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (irank == nranks - 1) {
+        fprintf(stdout, "\nAll-pairs shortest-distance matrix:\n");
+        fflush(stdout);
     }
+    print_stripes(stdout, MPI_COMM_WORLD, stripe, irank, nranks);
 
     // free resources
     free(distance_from_layover);
@@ -101,4 +117,15 @@ int main (int argc, char *argv[]) {
     MPI_Finalize();
 
     return EXIT_SUCCESS;
+}
+
+
+void print_stripes (FILE * stream, MPI_Comm mpi_comm, const Stripe * stripe, const int irank, const int nranks) {
+    for (int iprint = 0; iprint < nranks; iprint++) {
+        MPI_Barrier(mpi_comm);
+        if (iprint == irank) {
+            stripe_print(stripe, stdout);
+            fflush(stream);
+        }
+    }
 }
