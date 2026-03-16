@@ -87,6 +87,14 @@ int main (int argc, char *argv[]) {
         }
     }
 
+    for (int iprint = 0; iprint < nranks; iprint++) {
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (iprint == irank) {
+            stripe_print(stripe, stdout);
+            fflush(stdout);
+        }
+    }
+
     // free resources
     free(distance_from_layover);
     stripe_delete(&stripe);
