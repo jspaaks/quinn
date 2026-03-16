@@ -30,23 +30,23 @@ void stripe_delete (struct stripe ** self) {
     *self = nullptr;
 }
 
-uint32_t stripe_get_irow0 (struct stripe * self) {
+uint32_t stripe_get_irow0 (const struct stripe * self) {
     return self->irow0;
 }
 
-uint32_t stripe_get_irown (struct stripe * self) {
+uint32_t stripe_get_irown (const struct stripe * self) {
     return self->irown;
 }
 
-uint32_t stripe_get_ncols (struct stripe * self) {
+uint32_t stripe_get_ncols (const struct stripe * self) {
     return self->ncolsg;
 }
 
-uint32_t stripe_get_nrows (struct stripe * self) {
+uint32_t stripe_get_nrows (const struct stripe * self) {
     return self->nrowsg;
 }
 
-uint8_t stripe_get_val (struct stripe * self, uint32_t irowg, uint32_t icolg) {
+uint8_t stripe_get_val (const struct stripe * self, uint32_t irowg, uint32_t icolg) {
     uint32_t irow = irowg - self->irow0;
     return self->matrix[irow][icolg];
 }
@@ -60,7 +60,7 @@ struct stripe * stripe_new (void) {
     return reader;
 }
 
-void stripe_print(struct stripe * self, FILE * stream) {
+void stripe_print (const struct stripe * self, FILE * stream) {
     int nrows = (int) self->nrows;
     int ncols = (int) self->ncols;
     for (int irow = 0; irow < nrows; irow++) {
