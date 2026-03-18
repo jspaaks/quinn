@@ -17,16 +17,29 @@ $ cmake --build .
 
 # install the project to <repo>/build/dist
 $ cmake --install . --prefix dist/
-
-# run the program to see if it works
-$ mpirun -np 2 ./dist/bin/pingpong 10000
 ```
 
-Should output something like:
+Output should be something like:
 
 ```text
-10000 ping-pongs of 1 byte took 0.003404 seconds
-10000 ping-pongs of 1 MB took 1.253736 seconds
+$ ./dist/bin/pingpong
+Usage: mpirun -np 2 ./dist/bin/pingpong N
+    Multiprocess program that goes back and forth between its 2 processes
+    for a total of N times, subsequently reporting average latency and
+    bandwidth statistics
+--------------------------------------------------------------------------
+MPI_ABORT was invoked on rank 0 in communicator MPI_COMM_WORLD
+with errorcode -1.
+
+NOTE: invoking MPI_ABORT causes Open MPI to kill all MPI processes.
+You may or may not see output from other processes, depending on
+exactly when Open MPI kills them.
+--------------------------------------------------------------------------
+$ mpirun -np 2 ./dist/bin/pingpong 10000
+10000 ping-pongs of 1 byte took 0.002910 seconds
+10000 ping-pongs of 1 MB took 1.231166 seconds
+Estimated latency: 1.45439e-07 [s]
+Estimated bandwidth: 1.62832e+10 [bytes/s]
 ```
 
 ## Address sanitizing
