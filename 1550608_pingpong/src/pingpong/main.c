@@ -6,6 +6,8 @@
 #endif // PINGPONG_TRAP_DBG
 #include <stdlib.h>
 
+double calc_bandwidth (double d1, int n, double latency, int nbytes_large);
+double calc_latency (double d0, double d1, int n, int nbytes_large);
 void terminate (int irank, const char * program_name);
 
 struct msg {
@@ -13,6 +15,17 @@ struct msg {
     char * msg;
     MPI_Datatype mpi_datatype;
 };
+
+double calc_bandwidth (double d1, int n, double latency, int nbytes_large) {
+    double tmp = (double) d1 / 2 / n;
+    return (double) nbytes_large / (tmp - latency);
+}
+
+double calc_latency (double d0, double d1, int n, int nbytes_large) {
+    double rhs = d0 / 2 / n - d1 / 2 / n / nbytes_large;
+    double tmp = (double) 1 / nbytes_large;
+    return rhs / ((double) 1 + tmp);
+}
 
 int main (int argc, char * argv[]) {
 
@@ -69,8 +82,11 @@ int main (int argc, char * argv[]) {
     const int ileft = 0;
     const int iright = 1;
     MPI_Status status = {};
-    double starttime = -1;
-    double endtime = -1;
+    double starttime = -1.0;
+    double endtime = -1.0;
+    double d0 = -1.0;
+    double d1 = -1.0;
+
     if (irank == 0) {
         starttime = MPI_Wtime();
         for (int i = 0; i < n; i++) {
@@ -78,7 +94,8 @@ int main (int argc, char * argv[]) {
             MPI_Recv(small.msg, small.nbytes, small.mpi_datatype, iright, 0, MPI_COMM_WORLD, &status);
         }
         endtime = MPI_Wtime();
-        printf("%d ping-pongs of 1 byte took %f seconds\n", n, endtime - starttime);
+        d0 = endtime - starttime;
+        printf("%d ping-pongs of 1 byte took %f seconds\n", n, d0);
 
         starttime = MPI_Wtime();
         for (int i = 0; i < n; i++) {
@@ -86,7 +103,15 @@ int main (int argc, char * argv[]) {
             MPI_Recv(large.msg, large.nbytes, large.mpi_datatype, iright, 0, MPI_COMM_WORLD, &status);
         }
         endtime = MPI_Wtime();
-        printf("%d ping-pongs of 1 MB took %f seconds\n", n, endtime - starttime);
+        d1 = endtime - starttime;
+        printf("%d ping-pongs of 1 MB took %f seconds\n", n, d1);
+
+        double latency = calc_latency(d0, d1, n, large.nbytes);
+        double bandwidth = calc_bandwidth(d1, n, latency, large.nbytes);
+
+        printf("Estimated latency: %g [s]\n", latency);
+        printf("Estimated bandwidth: %g [bytes/s]\n", bandwidth);
+
     } else {
         for (int i = 0; i < n; i++) {
             MPI_Recv(small.msg, small.nbytes, small.mpi_datatype, ileft, 0, MPI_COMM_WORLD, &status);
