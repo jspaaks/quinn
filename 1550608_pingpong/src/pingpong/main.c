@@ -31,7 +31,7 @@ int main (int argc, char * argv[]) {
 
     MPI_Init(&argc, &argv);
 
-#ifdef FLOYD_PAR_TRAP_DBG
+#ifdef PINGPONG_TRAP_DBG
     {
         volatile bool iswaiting = true;
         char hostname[256];
@@ -45,7 +45,7 @@ int main (int argc, char * argv[]) {
             sleep(3);
         }
     }
-#endif // FLOYD_PAR_TRAP_DBG
+#endif // PINGPONG_TRAP_DBG
 
     int irank = -1;
     int nranks = -1;
