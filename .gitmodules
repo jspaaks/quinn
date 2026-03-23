@@ -13,3 +13,6 @@
 [submodule "1550609_reduce/third_party/libblkdcmp"]
 	path = 1550609_reduce/third_party/libblkdcmp
 	url = https://github.com/jspaaks/libblkdcmp.git
+[submodule "1560611_sieve/third_party/libblkdcmp"]
+	path = 1560611_sieve/third_party/libblkdcmp
+	url = https://github.com/jspaaks/libblkdcmp.git
