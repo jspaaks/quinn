@@ -11,6 +11,8 @@
 #endif // SIEVE_TRAP_DBG
 #include "blkdcmp/blkdcmp.h"
 
+void show_usage (FILE * stream, const char * programname);
+
 int main (int argc, char * argv[]) {
 
     MPI_Init(&argc, &argv);
@@ -31,40 +33,51 @@ int main (int argc, char * argv[]) {
     }
 #endif // SIEVE_TRAP_DBG
 
-    // global / constant across processes
-    char msg[1001] = {};          // error message buffer
-    int n;                        // maximum integer to include in the sieve
-    int nranks;                   // number of processes
-    int prime;                    // current prime
-
-    // local / variable across processes
-    int count;                    // prime count on this process
-    double elapsed_time;          // parallel execution time
-    int first;                    // index of first multiple of the current prime on this process
-    int irank;                    // this process's rank
-    int low_value;                // integer value corresponding to isnonprime[0] on this process
-    bool * isnonprime = nullptr;  // portion of the sieve handled by this process
-    int nelems;                   // number of elements in `isnonprime` handled by this process
-
-    // local to process 0
-    int count0;                   // accumulated prime count
-    int high_value0;              // integer value corresponding to isnonprime[nelems-1] on process 0
-    int index0;                   // index of current prime
-
-    // Start the timer
-    MPI_Barrier(MPI_COMM_WORLD);
-    elapsed_time = -MPI_Wtime();
+    int irank = -1;                    // this process's rank
+    int nranks = -1;                   // number of processes
 
     MPI_Comm_rank(MPI_COMM_WORLD, &irank);
     MPI_Comm_size(MPI_COMM_WORLD, &nranks);
 
+    // verify that the user is using the program as intended
     if (argc != 2) {
-        strncpy(msg, "Usage: sieve-refactored N\n    Determine the number of primes in [2,...,N]\n", 1000);
-        goto err;
+        if (irank == 0) {
+            show_usage(stderr, argv[0]);
+            MPI_Abort(MPI_COMM_WORLD, -1);
+        }
+        // wait for rank 0's printing
+        MPI_Barrier(MPI_COMM_WORLD);
+        return EXIT_FAILURE;
     }
 
-    // get the user input
-    n = atoi(argv[1]);
+    // optionally show the help and exit
+    if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
+        if (irank == 0) {
+            show_usage(stdout, argv[0]);
+        }
+        MPI_Finalize();
+        return EXIT_SUCCESS;
+    }
+
+    constexpr int msg_cap = 1000; // error message capacity
+
+    int count;                    // prime count on this process
+    int count0;                   // accumulated prime count (only on process 0)
+    double elapsed_time;          // parallel execution time
+    int first;                    // index of first multiple of the current prime on this process
+    int index0;                   // index of current prime (only on process 0)
+    bool * isnonprime = nullptr;  // portion of the sieve handled by this process
+    int low_value;                // integer value corresponding to isnonprime[0] on this process
+    char msg[msg_cap] = {};       // error message buffer
+    int nelems;                   // number of elements in `isnonprime` handled by this process
+    int prime;                    // current prime
+
+    // start the timer
+    MPI_Barrier(MPI_COMM_WORLD);
+    elapsed_time = -MPI_Wtime();
+
+    // get the maximum integer to include in the sieve from user input
+    int n = atoi(argv[1]);
 
     // determine the integer represented by the first element of isnonprime in each process, as well
     // as the length of isnonprime in each process
@@ -72,16 +85,19 @@ int main (int argc, char * argv[]) {
     nelems = blkdcmp_get_blk_sz(n+1, nranks, irank);
 
     // verify that all primes are contained within the first process, otherwise abort
-    high_value0 = blkdcmp_get_idx_blk_e(n+1, nranks, 0);
-    if (high_value0 < (int) sqrt(n)) {
-        strncpy(msg, "Too many processes\n", 1000);
-        goto err;
+    if (irank == 0) {
+        // calculate integer value corresponding to isnonprime[nelems-1] on process 0
+        int high_value = blkdcmp_get_idx_blk_e(n+1, nranks, 0);
+        if (high_value < (int) sqrt(n)) {
+            strncpy(msg, "Too many processes\n", msg_cap - 1);
+            goto err;
+        }
     }
 
     // allocate this process's share of the sieve
     isnonprime = (bool *) calloc(nelems, sizeof(bool));
     if (isnonprime == nullptr) {
-        strncpy(msg, "Error allocating dynamic memory for isnonprime array.\n", 1000);
+        strncpy(msg, "Error allocating dynamic memory for isnonprime array.\n", msg_cap - 1);
         goto err;
     }
     if (irank == 0) {
@@ -146,8 +162,19 @@ int main (int argc, char * argv[]) {
 err:
     if (irank == 0) {
         fprintf(stderr, "%s", msg);
+        MPI_Abort(MPI_COMM_WORLD, -1);
     }
-    MPI_Finalize();
+    MPI_Barrier(MPI_COMM_WORLD);
     free(isnonprime);
     return EXIT_FAILURE;
+}
+
+void show_usage (FILE * stream, const char * programname) {
+    fprintf(stream,
+            "Usage: mpirun -np P %s N\n"
+            "\n"
+            "    Use P processes to determine the number of primes in the\n"
+            "    interval [2, N] using the Sieve of Erathostenes with\n"
+            "    Lester's performance improvements.\n"
+            "\n", programname);
 }
