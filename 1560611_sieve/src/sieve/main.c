@@ -128,14 +128,22 @@ int main (int argc, char * argv[]) {
             isnonprime[ielem] = true;
         }
 
-        // use only process 0's isnonprime array to determine which index is the next prime
         if (irank == 0) {
+            // use only process 0's isnonprime array to determine which index is the next prime
             while (isnonprime[++index0]);
             prime = index0;
+            // send the prime to the next process
+            MPI_Send(&prime, 1, MPI_INT, irank + 1, 0, MPI_COMM_WORLD);
+        } else if (irank == nranks - 1) {
+            // receive a prime from the previous process
+            MPI_Status status = {};
+            MPI_Recv(&prime, 1, MPI_INT, irank - 1, 0, MPI_COMM_WORLD, &status);
+        } else {
+            // receive a prime from the previous process and send it on to the next
+            MPI_Status status = {};
+            MPI_Recv(&prime, 1, MPI_INT, irank - 1, 0, MPI_COMM_WORLD, &status);
+            MPI_Send(&prime, 1, MPI_INT, irank + 1, 0, MPI_COMM_WORLD);
         }
-
-        // broadcast the value of the newly found next prime to all other processes
-        MPI_Bcast(&prime, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     } while (prime * prime <= n);
 
