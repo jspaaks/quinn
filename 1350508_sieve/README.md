@@ -1,4 +1,4 @@
-# 1350508 Parallel sieve of Erathostenes
+# 1350508 Parallel sieve of Eratosthenes
 
 Modifications:
 

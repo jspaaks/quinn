@@ -1,4 +1,4 @@
-# 1350507 Parallel sieve of Erathostenes
+# 1350507 Parallel sieve of Eratosthenes
 
 Modifications:
 

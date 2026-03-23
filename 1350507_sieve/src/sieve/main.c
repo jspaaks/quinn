@@ -1,5 +1,5 @@
 /*
-    In this iteration of the parallel implementation of the sieve of Erathostenes, we
+    In this iteration of the parallel implementation of the sieve of Eratosthenes, we
        (1) skip dealing with even integers
        (2) have each process determine what the next prime is on its own
 */

@@ -174,7 +174,7 @@ void show_usage (FILE * stream, const char * programname) {
             "Usage: mpirun -np P %s N\n"
             "\n"
             "    Use P processes to determine the number of primes in the\n"
-            "    interval [2, N] using the Sieve of Erathostenes with\n"
+            "    interval [2, N] using the Sieve of Eratosthenes with\n"
             "    Lester's performance improvements.\n"
             "\n", programname);
 }

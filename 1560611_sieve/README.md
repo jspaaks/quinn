@@ -1,6 +1,6 @@
 # 1560611_sieve
 
-Parallel implementation of the sieve of Erathostenes, with performance improvements proposed by
+Parallel implementation of the sieve of Eratosthenes, with performance improvements proposed by
 Lester, 1993 (replacing the `MPI_BCast` with a series of `MPI_Send`s / `MPI_Recv`'s).
 
 ## CMake

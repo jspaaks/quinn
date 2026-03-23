@@ -1,5 +1,5 @@
 /*
-    In this iteration of the parallel implementation of the sieve of Erathostenes, we
+    In this iteration of the parallel implementation of the sieve of Eratosthenes, we
        (1) skip dealing with even integers
        (2) have each process determine what the next prime is on its own
        (3) improve cache hits by marking subsections of the sieve for all primes before moving on to
