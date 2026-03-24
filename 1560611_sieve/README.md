@@ -25,6 +25,15 @@ $ cmake --install . --prefix dist/
 Expected output should be something like:
 
 ```text
+$ ./dist/bin/sieve --help
+Usage: mpirun -np P ./dist/bin/sieve N
+    Use P processes to determine the number of primes in the
+    interval [2, N] using the Sieve of Erathostenes with
+    Lester's performance improvements.
+
+$ mpirun -np 4 ./dist/bin/sieve 10000
+1229 primes are less than or equal to 10000
+Total elapsed time:   0.000110
 ```
 
 ## Address sanitizing
