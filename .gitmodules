@@ -16,3 +16,9 @@
 [submodule "1560611_sieve/third_party/libblkdcmp"]
 	path = 1560611_sieve/third_party/libblkdcmp
 	url = https://github.com/jspaaks/libblkdcmp.git
+[submodule "1560612a_shade/third_party/libblkdcmp"]
+	path = 1560612a_shade/third_party/libblkdcmp
+	url = https://github.com/jspaaks/libblkdcmp.git
+[submodule "1560612a_shade/third_party/libidx"]
+	path = 1560612a_shade/third_party/libidx
+	url = https://github.com/jspaaks/libidx.git
