@@ -8,9 +8,9 @@
 
 void print_map(int nrows, int ncols, int8_t ** map, const char * label);
 void show_usage (FILE * stream, const char * programname);
-void verify_data_is_2d (IdxHeader * header, const char * input_filepath);
-void verify_data_is_int8 (IdxHeader * header, const char * input_filepath);
-void verify_data_is_square (IdxHeader * header, const char * input_filepath);
+void verify_data_is_2d (struct idx_file_object * idx, const char * input_filepath);
+void verify_data_is_int8 (struct idx_file_object * idx, const char * input_filepath);
+void verify_data_is_square (struct idx_file_object * idx, const char * input_filepath);
 
 #define LIT ((int8_t) 0)
 #define SHADED ((int8_t) 1)
@@ -37,29 +37,34 @@ int main (int argc, const char * argv[]) {
     const char * input_filepath = CLA_get_value_positional(cla, 0);
 
     // read the idx data 
-    IdxHeader header = idx_read_header(input_filepath);
+    struct idx_file_object * idx = idx_create_and_read(input_filepath);
 
     // run some checks
-    verify_data_is_int8(&header, input_filepath);
-    verify_data_is_2d(&header, input_filepath);
-    verify_data_is_square(&header, input_filepath);
+    if (idx_get_ndims(idx) != 2) {
+        fprintf(stderr, "Expected 2 dimensions, aborting.\n");
+        return EXIT_FAILURE;
+    };
+
+    verify_data_is_int8(idx, input_filepath);
+    verify_data_is_2d(idx, input_filepath);
+    verify_data_is_square(idx, input_filepath);
 
     // read the topograpic data into memory
-    int nrows = (int) header.lengths[0];
-    int ncols = (int) header.lengths[1];
-    int8_t * topobuf = calloc(header.nelems, 1);
+    int nrows = idx_get_dim_length(idx, 0);
+    int ncols = idx_get_dim_length(idx, 1);
+    int nelems = idx_get_nelems(idx);
+    int8_t * topobuf = (int8_t *) idx_get_data_int8(idx);
     int8_t ** topo = calloc(nrows, sizeof(int8_t *));
     for (int irow = 0; irow < nrows; irow++) {
         topo[irow] = &topobuf[irow * ncols];
     }
-    idx_read_body_as_int8(input_filepath, &header, topobuf);
-
+    
     // print the topographic map
     print_map(nrows, ncols, topo, "topo");
     fprintf(stdout, "\n");
 
     // allocate memory for the result
-    int8_t * shadebuf = calloc(header.nelems, 1);
+    int8_t * shadebuf = calloc(nelems, 1);
     int8_t ** shade = calloc(nrows, sizeof(int8_t *));
     for (int irow = 0; irow < nrows; irow++) {
         shade[irow] = &shadebuf[irow * ncols];
@@ -78,12 +83,9 @@ int main (int argc, const char * argv[]) {
         }
     }
 
-
     // print the shade map
     print_map(nrows, ncols, shade, "shade");
 
-    free(topobuf);
-    topobuf = nullptr;
     free(topo);
     topo = nullptr;
 
@@ -91,6 +93,9 @@ int main (int argc, const char * argv[]) {
     shadebuf = nullptr;
     free(shade);
     shade = nullptr;
+
+    // free the memory associated with the idx file object
+    idx_destroy(&idx);
 
     // free the memory assiociated with the command line arguments parser
     CLA_destroy(&cla);
@@ -122,27 +127,31 @@ void show_usage (FILE * stream, const char * programname) {
             "\n", programname);
 }
 
-void verify_data_is_2d (IdxHeader * header, const char * input_filepath) {
-    if (header->ndims != 2) {
-        fprintf(stderr, "Expected number of dimensions in file '%s' to be 2 but got %" PRIu8", "
-                "aborting.\n", input_filepath, header->ndims);
+void verify_data_is_2d (struct idx_file_object * idx, const char * input_filepath) {
+    int ndims = idx_get_ndims(idx);
+    if (ndims != 2) {
+        fprintf(stderr, "Expected number of dimensions in file '%s' to be 2 but got %d, "
+                "aborting.\n", input_filepath, ndims);
         exit(EXIT_FAILURE);
     }
 }
 
-void verify_data_is_int8 (IdxHeader * header, const char * input_filepath) {
-    if (header->type != 0x09) {
-        fprintf(stderr, "Expected data type in file '%s' to be int8_t but got something else, "
-                "aborting.\n", input_filepath);
+void verify_data_is_int8 (struct idx_file_object * idx, const char * input_filepath) {
+    IdxDataType type = idx_get_type(idx);
+    const char * data_type_name = idx_get_type_name(idx);
+    if (type != IDX_DATA_TYPE_INT8) {
+        fprintf(stderr, "Expected data type in file '%s' to be int8_t but got '%s', "
+                "aborting.\n", input_filepath, data_type_name);
         exit(EXIT_FAILURE);
     }
 }
 
-void verify_data_is_square (IdxHeader * header, const char * input_filepath) {
-    if (header->lengths[0] != header->lengths[1]) {
-        fprintf(stderr, "Expected a square matrix in file '%s' but got %" PRIu32 "x%" PRIu32 ".\n",
-                input_filepath, header->lengths[0], header->lengths[1]);
+void verify_data_is_square (struct idx_file_object * idx, const char * input_filepath) {
+    int nrows = idx_get_dim_length(idx, 0);
+    int ncols = idx_get_dim_length(idx, 1);
+    if (nrows != ncols) {
+        fprintf(stderr, "Expected a square matrix in file '%s' but got %dx%d.\n",
+                input_filepath, nrows, ncols);
         exit(EXIT_FAILURE);
     }
 }
-
