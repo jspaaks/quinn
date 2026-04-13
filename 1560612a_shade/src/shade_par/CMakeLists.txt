@@ -31,12 +31,14 @@ target_compile_options(
 target_include_directories(
     tgt_exe_shade_par
     PRIVATE
+        ../../third_party/libcla/include
         ../../third_party/libidx/include
 )
 
 target_link_libraries(
     tgt_exe_shade_par
     PRIVATE
+        tgt_lib_cla
         tgt_lib_idx
         MPI::MPI_C
 )

@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "idx/idx.h"
 #include "cla/cla.h"
+#include "idx/idx.h"
 
 void print_map(int nrows, int ncols, int8_t ** map, const char * label);
 void show_usage (FILE * stream, const char * programname);
@@ -86,6 +86,7 @@ int main (int argc, const char * argv[]) {
     // print the shade map
     print_map(nrows, ncols, shade, "shade");
 
+    // free memory resources
     free(topo);
     topo = nullptr;
 
