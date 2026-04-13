@@ -22,3 +22,6 @@
 [submodule "1560612a_shade/third_party/libidx"]
 	path = 1560612a_shade/third_party/libidx
 	url = https://github.com/jspaaks/libidx.git
+[submodule "1560612a_shade/third_party/libcla"]
+	path = 1560612a_shade/third_party/libcla
+	url = https://github.com/jspaaks/libcla.git

@@ -30,12 +30,14 @@ target_compile_options(
 target_include_directories(
     tgt_exe_shade_seq
     PRIVATE
+        ../../third_party/libcla/include
         ../../third_party/libidx/include
 )
 
 target_link_libraries(
     tgt_exe_shade_seq
     PRIVATE
+        tgt_lib_cla
         tgt_lib_idx
 )
 

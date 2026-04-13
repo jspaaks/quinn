@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "idx/idx.h"
+#include "cla/cla.h"
 
 void print_map(int nrows, int ncols, int8_t ** map, const char * label);
 void show_usage (FILE * stream, const char * programname);
@@ -14,20 +15,28 @@ void verify_data_is_square (IdxHeader * header, const char * input_filepath);
 #define LIT ((int8_t) 0)
 #define SHADED ((int8_t) 1)
 
-int main (int argc, char * argv[]) {
+int main (int argc, const char * argv[]) {
 
-    if (argc == 2) {
-        if (strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0) {
-            show_usage(stdout, argv[0]);
-            return EXIT_SUCCESS;
-        }
-    } else {
-        show_usage(stderr, argv[0]);
-        return EXIT_FAILURE;
+    // create the command line arguments parser object and its associated dynamic memory
+    struct cla * cla = CLA_create();
+
+    // define that this program expects exactly 1 positional argument
+    CLA_add_positionals(cla, 1);
+
+    // parse the command line arguments that the user provided
+    CLA_parse(cla, argc, argv);
+
+    // if the user requested help, show it and exit
+    if (CLA_help_requested(cla)) {
+        const char * programname = CLA_get_exename(cla);
+        show_usage(stdout, programname);
+        return EXIT_SUCCESS;
     }
 
-    const char * input_filepath = argv[1];
+    // retrieve the value of the positional argument at index 0
+    const char * input_filepath = CLA_get_value_positional(cla, 0);
 
+    // read the idx data 
     IdxHeader header = idx_read_header(input_filepath);
 
     // run some checks
@@ -83,6 +92,9 @@ int main (int argc, char * argv[]) {
     free(shade);
     shade = nullptr;
 
+    // free the memory assiociated with the command line arguments parser
+    CLA_destroy(&cla);
+
     return EXIT_SUCCESS;
 }
 
@@ -100,8 +112,8 @@ void show_usage (FILE * stream, const char * programname) {
     fprintf(stream,
             "Usage: %s FILENAME\n"
             "\n"
-            "    Calculate shading based on topographic data from FILENAME, assuming that the\n"
-            "    sun is due West, and using a sequential implementation.\n"
+            "    Calculate shading based on topographic data from FILENAME, using a sequential\n"
+            "    implementation and assuming that the sun is due West.\n"
             "\n"
             "    Arguments\n"
             "\n"
