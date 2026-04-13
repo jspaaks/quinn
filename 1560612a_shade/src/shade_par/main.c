@@ -71,11 +71,6 @@ int main (int argc, const char * argv[]) {
     struct idx_file_object * idx = idx_create_and_read(input_filepath);
 
     // run some checks
-    if (idx_get_ndims(idx) != 2) {
-        fprintf(stderr, "Expected 2 dimensions, aborting.\n");
-        return EXIT_FAILURE;
-    };
-
     verify_data_is_int8(idx, input_filepath);
     verify_data_is_2d(idx, input_filepath);
     verify_data_is_square(idx, input_filepath);
