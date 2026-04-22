@@ -55,6 +55,33 @@ shade:
    0   1   1   0   1   1
    0   1   0   0   0   1
    0   0   0   0   0   1
+
+$ ./dist/bin/shade-par --help
+Usage: mpirun -np N ./dist/bin/shade-par FILENAME
+
+    Calculate shading based on topographic data from FILENAME, using a parallel
+    implementation and assuming that the sun is due West.
+
+    Arguments
+
+        FILENAME   IDX formatted, 2-dimensional, square array of int8_t
+                   holding the topographic data
+
+$ mpirun -np 4 ./dist/bin/shade-par ../data/topography.int8.idx 
+topo:
+  0   0   5   3   2   0
+  5   7  11  10   8   4
+ 15   9  16   7   8   3
+ 22  15   4  11   7   2
+ 10   2  10   9   7   2
+  0   0   5   7   4   0
+shade:
+  0   0   0   0   0   0
+  0   0   0   0   0   1
+  0   1   0   1   1   1
+  0   1   1   0   1   1
+  0   1   0   0   0   1
+  0   0   0   0   0   1
 ```
 
 ## Address sanitizing
