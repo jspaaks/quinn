@@ -36,8 +36,10 @@ int main (int argc, const char * argv[]) {
     // retrieve the value of the positional argument at index 0
     const char * input_filepath = CLA_get_value_positional(cla, 0);
 
-    // read the idx data 
-    struct idx_file_object * idx = idx_create_and_read(input_filepath);
+    // read the idx data
+    struct idx_file_object * idx = idx_create(input_filepath);
+    idx_read_meta(idx);
+    idx_read_body(idx);
 
     // run some checks
     if (idx_get_ndims(idx) != 2) {
