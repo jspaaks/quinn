@@ -25,3 +25,6 @@
 [submodule "1560612a_shade/third_party/libcla"]
 	path = 1560612a_shade/third_party/libcla
 	url = https://github.com/jspaaks/libcla.git
+[submodule "1570613_life/third_party/libcla"]
+	path = 1570613_life/third_party/libcla
+	url = https://github.com/jspaaks/libcla.git
