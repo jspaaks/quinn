@@ -28,3 +28,6 @@
 [submodule "1570613_life/third_party/libcla"]
 	path = 1570613_life/third_party/libcla
 	url = https://github.com/jspaaks/libcla.git
+[submodule "1570613_life/third_party/libblkdcmp"]
+	path = 1570613_life/third_party/libblkdcmp
+	url = https://github.com/jspaaks/libblkdcmp.git
