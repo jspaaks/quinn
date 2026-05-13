@@ -4,6 +4,7 @@
 #include <mpi.h>                 // MPI_*
 #include <stdio.h>               // stdout, FILE, fflush
 #include <stdlib.h>              // rand, srand
+#include <sys/param.h>           // MAX
 #include <time.h>                // time
 #ifdef LIFE_PAR_TRAP_DBG
 #include <unistd.h>              // gethostname, getpid, sleep
@@ -32,7 +33,7 @@ static void show_usage (FILE * stream, struct cla * cla, int irank);
 static bool ** stripe_calloc (struct geom geom);
 static void stripe_communicate_borders (struct geom geom, bool *** stripe, int irank, int nranks, MPI_Comm comm);
 static void stripe_free (bool *** stripe);
-static void stripe_init (struct geom geom, bool ** stripe, float prob);
+static void stripe_init (struct geom geom, bool ** stripe, float prob, int irank, int nranks, MPI_Comm comm);
 static void stripe_print(FILE * stream, struct geom geom, bool ** stripe, int iiter, int irank, int nranks, MPI_Comm comm);
 static void stripe_update(struct geom geom, bool *** stripe, const int ** neighs);
 
@@ -137,9 +138,6 @@ int main (int argc, char * argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &irank);
     MPI_Comm_size(MPI_COMM_WORLD, &nranks);
 
-    // initialize the pseudorandom number generator
-    srand(time(nullptr));
-
     // register the names of expected command line arguments
     cla = CLA_create();
     CLA_add_required(cla, "--nrows", "-r");
@@ -171,7 +169,7 @@ int main (int argc, char * argv[]) {
     neighs = neighs_calloc(geom);
 
     // let each process initialize its stripe arrays using the user defined probability
-    stripe_init(geom, stripe, prob);
+    stripe_init(geom, stripe, prob, irank, nranks, MPI_COMM_WORLD);
 
     // start simulating
     for (int iiter = 0; iiter < niters; iiter++) {
@@ -203,12 +201,14 @@ static int ** neighs_calloc (struct geom geom) {
     if (buf == nullptr) {
         const int code = __LINE__;
         fwprintf(stderr, L"ERROR %d: Problem allocating memory for buffer, aborting.\n", code);
+        MPI_Finalize();
         exit(code);
     }
     int ** buf2d = calloc(geom.stripe.nrows, sizeof(int *));
     if (buf2d == nullptr) {
         const int code = __LINE__;
         fwprintf(stderr, L"ERROR %d: Problem allocating memory for buffer, aborting.\n", code);
+        MPI_Finalize();
         exit(code);
     }
     for (int irow = 0; irow < geom.stripe.nrows; irow++) {
@@ -280,12 +280,14 @@ static bool ** stripe_calloc (struct geom geom) {
     if (buf == nullptr) {
         const int code = __LINE__;
         fwprintf(stderr, L"ERROR %d: Problem allocating memory for buffer, aborting.\n", code);
+        MPI_Finalize();
         exit(code);
     }
     bool ** buf2d = calloc(geom.stripe.nrows, sizeof(bool *));
     if (buf2d == nullptr) {
         const int code = __LINE__;
         fwprintf(stderr, L"ERROR %d: Problem allocating memory for buffer, aborting.\n", code);
+        MPI_Finalize();
         exit(code);
     }
     for (int irow = 0; irow < geom.stripe.nrows; irow++) {
@@ -333,9 +335,25 @@ static void stripe_free (bool *** stripe) {
 }
 
 
-static void stripe_init (struct geom geom, bool ** stripe, float prob) {
+static void stripe_init (struct geom geom, bool ** stripe, float prob, int irank, int nranks, MPI_Comm comm) {
+
+    if (irank == 0) {
+        // initialize the pseudorandom number generator using the current time
+        srand(time(nullptr));
+        for (int idst = 1; idst < nranks; idst++) {
+            int seed = rand();
+            MPI_Send(&seed, 1, MPI_INT, idst, 0, comm);
+        }
+    } else {
+        MPI_Status status = {};
+        int seed = -1;
+        MPI_Recv(&seed, 1, MPI_INT, 0, 0, comm, &status);
+        // initialize the pseudorandom number generator using the seed from rank 0
+        srand(seed);
+    }
+
     int nelems = (geom.stripe.nrows - 2) * (geom.stripe.ncols - 2);
-    int nalive = (int) (prob * nelems);
+    int nalive = MAX(1, (int) (prob * nelems));
     for (int irow = 1; irow < geom.stripe.nrows - 1; irow++) {
         for (int icol = 1; icol < geom.stripe.ncols - 1; icol++) {
             bool cond = rand() % nelems < nalive;
@@ -353,9 +371,11 @@ static void stripe_print(FILE * stream, struct geom geom, bool ** stripe, int ii
     wchar_t dead_light = L'\u2592';   // symbol to use for cell that is dead (lighter background)
     wchar_t alive = L'\u2588';        // symbol to use for cell that is alive
     int itgt = nranks - 1;            // last rank
+    int irow_checkerboard = 0;
     // allocate memory for receiving data from the other processes
     if (irank == itgt) {
         recvbuf = stripe_calloc(geom);
+        fwprintf(stream, L"t=%d:\n", iiter);
     }
     // let the other processes send their data to itgt who then prints it
     for (int isrc = 0; isrc < itgt; isrc++) {
@@ -369,15 +389,15 @@ static void stripe_print(FILE * stream, struct geom geom, bool ** stripe, int ii
                 .map = geom.map,
             };
             MPI_Recv(&recvbuf[0][0], src.stripe.nrows * src.stripe.ncols, MPI_C_BOOL, isrc, 0, comm, &status);
-            fwprintf(stream, L"t=%d:\n", iiter);
             for (int irow = 1; irow < src.stripe.nrows - 1; irow++) {
                 for (int icol = 1; icol < src.stripe.ncols - 1; icol++) {
-                    wchar_t dead = irow % 2 == icol % 2 ? dead_dark : dead_light;
-                    wchar_t ch =recvbuf[irow][icol] ? alive : dead;
+                    wchar_t dead = (irow_checkerboard + irow) % 2 == icol % 2 ? dead_dark : dead_light;
+                    wchar_t ch = recvbuf[irow][icol] ? alive : dead;
                     fwprintf(stream, L"%lc%lc", ch, ch);
                 }
                 fwprintf(stream, L"\n");
             }
+            irow_checkerboard += src.stripe.nrows - 2;
             fflush(stream);
         }
         if (irank == isrc) {
@@ -390,12 +410,13 @@ static void stripe_print(FILE * stream, struct geom geom, bool ** stripe, int ii
         stripe_free(&recvbuf);
         for (int irow = 1; irow < geom.stripe.nrows - 1; irow++) {
             for (int icol = 1; icol < geom.stripe.ncols - 1; icol++) {
-                wchar_t dead = irow % 2 == icol % 2 ? dead_dark : dead_light;
+                wchar_t dead = (irow_checkerboard + irow) % 2 == icol % 2 ? dead_dark : dead_light;
                 wchar_t ch = stripe[irow][icol] ? alive : dead;
                 fwprintf(stream, L"%lc%lc", ch, ch);
             }
             fwprintf(stream, L"\n");
         }
+        fflush(stream);
     }
 }
 
