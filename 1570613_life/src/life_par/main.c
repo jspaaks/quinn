@@ -395,7 +395,7 @@ static void stripe_print(FILE * stream, struct geom geom, bool ** stripe, int ii
                     wchar_t ch = recvbuf[irow][icol] ? alive : dead;
                     fwprintf(stream, L"%lc%lc", ch, ch);
                 }
-                fwprintf(stream, L"\n");
+                fwprintf(stream, L"  (%d)\n", isrc);
             }
             irow_checkerboard += src.stripe.nrows - 2;
             fflush(stream);
@@ -414,7 +414,7 @@ static void stripe_print(FILE * stream, struct geom geom, bool ** stripe, int ii
                 wchar_t ch = stripe[irow][icol] ? alive : dead;
                 fwprintf(stream, L"%lc%lc", ch, ch);
             }
-            fwprintf(stream, L"\n");
+            fwprintf(stream, L"  (%d)\n", itgt);
         }
         fflush(stream);
     }
