@@ -1,5 +1,3 @@
-[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
-
 # 1570613_life
 
 ## CMake
@@ -19,58 +17,100 @@ $ cmake --build .
 
 # install the project to <repo>/build/dist
 $ cmake --install . --prefix dist/
-
-# run the program to see if it works
-$ ./dist/bin/life_seq
 ```
 
-Should output something like:
+Output should be something like:
 
 ```text
--- test compile definitions
-   DEBUG compile definition has been defined.
+$ ./dist/bin/life_par -h
+Usage: mpirun -np NP ./dist/bin/life_par [REQUIREDS]
 
--- test wether math library was linked
-   sqrt(144) = 12.000000
+  Multiprocess implementation of Conway's Game of Life, using NP processes.
 
--- test c2x / c23 features
-   0 1 2 3 4
+  Required named arguments
 
--- test own library
-   divide(2, 3) = 0
-   multiply(2, 3) = 6
+    --niters, -i   Number of iterations to simulate
 
--- test external library
-   add(2, 3) = 5
-   subtract(2, 3) = -1
-```
+    --ncols, -c    Number of columns in the map
 
-## Testing
+    --nrows, -r    Number of rows in the map
 
-Building and running the tests requires that [Criterion](https://github.com/Snaipe/Criterion) is
-installed on the system, e.g. with
+    --prob, -p     Probability [0, 1] of life in an individual cell at
+                   the beginning of the simulation
 
-```console
-$ sudo apt install libcriterion3 libcriterion-dev
-```
-
-Run the tests with
-
-```console
-$ ./dist/bin/test_operations -j1 --verbose
-```
-
-The CMake variable `OPERATIONS_BUILD_TESTING` can be used to build the
-tests.
-
-- When this project is the top project, `OPERATIONS_BUILD_TESTING` inherits the value of
-  CTest's `BUILD_TESTING`, which is set to ON by default.
-- When this project is not the top project but instead it is used as a dependency to a parent
-  project, the default is to not build the tests. However, building the tests is still possible by
-  setting the `OPERATIONS_BUILD_TESTING` to `ON`, e.g like so:
-
-```console
-$ cmake -DOPERATIONS_BUILD_TESTING=ON ..
+$ mpirun -np 4 ./dist/bin/life_par -r 11 -c 20 -i 6 -p 0.25
+t=0:
+░░▒▒░░▒▒░░▒▒░░▒▒██▒▒░░▒▒██▒▒░░▒▒██████▒▒
+▒▒░░▒▒░░▒▒░░▒▒██▒▒██▒▒░░▒▒░░▒▒████░░██░░
+░░██░░▒▒██▒▒░░▒▒░░▒▒██▒▒░░▒▒░░▒▒████░░▒▒
+▒▒░░██░░██░░▒▒░░██░░▒▒░░▒▒░░▒▒████░░▒▒░░
+░░▒▒░░▒▒██▒▒░░▒▒░░▒▒░░██░░▒▒░░▒▒██▒▒████
+▒▒░░▒▒░░▒▒░░▒▒░░██░░██░░▒▒░░▒▒██▒▒░░▒▒░░
+░░▒▒░░██░░██░░▒▒██▒▒░░██░░▒▒░░▒▒██▒▒████
+▒▒░░████▒▒░░▒▒░░▒▒░░▒▒░░████▒▒░░▒▒░░▒▒██
+░░▒▒░░▒▒░░▒▒░░▒▒░░██░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒
+▒▒██▒▒░░▒▒░░██░░▒▒██▒▒██▒▒░░▒▒░░██░░██░░
+░░▒▒░░████████▒▒████░░██░░▒▒░░▒▒░░██░░▒▒
+t=1:
+░░▒▒░░▒▒░░▒▒░░▒▒██▒▒░░▒▒░░▒▒░░████▒▒██▒▒
+▒▒░░▒▒░░▒▒░░▒▒░░████▒▒░░▒▒░░▒▒██▒▒░░██░░
+░░▒▒░░██░░▒▒░░▒▒████░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒
+▒▒░░▒▒░░████▒▒░░▒▒░░▒▒░░▒▒░░▒▒██▒▒░░██░░
+░░▒▒░░██░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░██████░░▒▒
+▒▒░░▒▒░░▒▒░░▒▒░░▒▒██▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░
+░░▒▒██████▒▒░░▒▒░░██░░████▒▒░░▒▒░░▒▒████
+▒▒░░██████░░▒▒░░▒▒░░▒▒░░██░░▒▒░░▒▒░░████
+░░▒▒██▒▒░░▒▒░░▒▒░░▒▒██▒▒██▒▒░░▒▒░░▒▒░░▒▒
+▒▒░░▒▒░░██░░████▒▒██▒▒░░▒▒░░▒▒░░▒▒██▒▒░░
+░░▒▒░░▒▒████████████░░▒▒░░▒▒░░▒▒░░██░░▒▒
+t=2:
+░░▒▒░░▒▒░░▒▒░░▒▒████░░▒▒░░▒▒░░██████░░▒▒
+▒▒░░▒▒░░▒▒░░▒▒██▒▒░░▒▒░░▒▒░░▒▒██████▒▒░░
+░░▒▒░░▒▒██▒▒░░▒▒████░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒
+▒▒░░▒▒████░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒██▒▒██▒▒░░
+░░▒▒░░▒▒██▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░██████░░▒▒
+▒▒░░▒▒██▒▒░░▒▒░░▒▒░░██░░▒▒░░▒▒░░▒▒░░▒▒░░
+░░▒▒██▒▒██▒▒░░▒▒░░▒▒██████▒▒░░▒▒░░▒▒████
+▒▒██▒▒░░██░░▒▒░░▒▒░░██░░████▒▒░░▒▒░░████
+░░▒▒██▒▒████░░▒▒░░▒▒░░██░░▒▒░░▒▒░░▒▒██▒▒
+▒▒░░▒▒████░░▒▒░░▒▒████░░▒▒░░▒▒░░▒▒░░▒▒░░
+░░▒▒░░▒▒██▒▒░░▒▒░░██░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒
+t=3:
+░░▒▒░░▒▒░░▒▒░░▒▒██▒▒░░▒▒░░▒▒░░██░░██░░▒▒
+▒▒░░▒▒░░▒▒░░▒▒██▒▒░░▒▒░░▒▒░░▒▒██▒▒██▒▒░░
+░░▒▒░░████▒▒░░▒▒██▒▒░░▒▒░░▒▒░░██░░██░░▒▒
+▒▒░░▒▒██████▒▒░░▒▒░░▒▒░░▒▒░░▒▒██▒▒██▒▒░░
+░░▒▒░░████▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░██░░██░░▒▒
+▒▒░░▒▒██▒▒░░▒▒░░▒▒░░██░░▒▒░░▒▒░░▒▒░░▒▒░░
+░░▒▒██▒▒██▒▒░░▒▒░░████▒▒████░░▒▒░░▒▒████
+▒▒████░░██░░▒▒░░▒▒░░██░░▒▒██▒▒░░▒▒██▒▒░░
+░░▒▒██▒▒░░██░░▒▒░░██░░████▒▒░░▒▒░░▒▒████
+▒▒░░▒▒░░▒▒░░▒▒░░▒▒████░░▒▒░░▒▒░░▒▒░░▒▒░░
+░░▒▒░░████▒▒░░▒▒░░████▒▒░░▒▒░░▒▒░░▒▒░░▒▒
+t=4:
+░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒
+▒▒░░▒▒░░▒▒░░▒▒████░░▒▒░░▒▒░░████▒▒████░░
+░░▒▒░░██░░██░░▒▒░░▒▒░░▒▒░░▒▒████░░████▒▒
+▒▒░░██░░▒▒██▒▒░░▒▒░░▒▒░░▒▒░░████▒▒████░░
+░░▒▒░░██░░██░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒
+▒▒░░▒▒██▒▒░░▒▒░░▒▒██████▒▒░░▒▒░░▒▒░░▒▒░░
+░░████▒▒██▒▒░░▒▒░░████▒▒████░░▒▒░░▒▒██▒▒
+▒▒████░░████▒▒░░▒▒░░▒▒░░▒▒██▒▒░░▒▒██▒▒░░
+░░██████░░▒▒░░▒▒░░██░░████▒▒░░▒▒░░▒▒██▒▒
+▒▒░░▒▒████░░▒▒░░██░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░
+░░▒▒░░▒▒░░▒▒░░▒▒░░████▒▒░░▒▒░░▒▒░░▒▒░░▒▒
+t=5:
+░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒
+▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░████▒▒████░░
+░░▒▒░░▒▒██▒▒██▒▒░░▒▒░░▒▒░░██░░▒▒░░▒▒░░██
+▒▒░░████▒▒████░░▒▒░░▒▒░░▒▒░░████▒▒████░░
+░░▒▒░░▒▒██▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒
+▒▒░░████▒▒░░▒▒░░▒▒██▒▒████░░▒▒░░▒▒░░▒▒░░
+░░██░░▒▒████░░▒▒░░██░░▒▒████░░▒▒░░▒▒░░▒▒
+██░░▒▒░░████▒▒░░▒▒██▒▒░░▒▒██▒▒░░▒▒████░░
+░░██░░▒▒░░██░░▒▒░░▒▒░░▒▒██▒▒░░▒▒░░▒▒░░▒▒
+▒▒░░▒▒████░░▒▒░░██░░▒▒██▒▒░░▒▒░░▒▒░░▒▒░░
+░░▒▒░░▒▒░░▒▒░░▒▒░░██░░▒▒░░▒▒░░▒▒░░▒▒░░▒▒
 ```
 
 ## Address sanitizing
@@ -82,9 +122,15 @@ To use address sanitizing, you may need to install an extra dependency, e.g. lik
 sudo apt install libasan8
 ```
 
-The CMake variable `LIFE_SEQ_WITH_ASAN` can be used to enable address sanitizing on the
-executable `life_seq`. `LIFE_SEQ_WITH_ASAN`'s value is `OFF` by default. To
-enable it, configure the build via `ccmake ..`, or via a command line argument with:
+## CMake variables
+
+| CMake variable name   | Description |
+| ---                   | --- |
+| `LIFE_PAR_TRAP_DBG`   | enables trapping execution of the program at the start in order to facilitate attaching a debugger |
+| `LIFE_PAR_WITH_ASAN`  | enables address sanitizing on the executable `life_par` |
+| `LIFE_SEQ_WITH_ASAN`  | enables address sanitizing on the executable `life_seq` |
+
+To enable a variable, configure the build via `ccmake ..`, or via a command line argument with e.g.:
 
 ```console
 $ cmake -DLIFE_SEQ_WITH_ASAN=ON ..
