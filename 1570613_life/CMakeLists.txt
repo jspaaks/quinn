@@ -4,6 +4,7 @@ project(1570613_life LANGUAGES C)
 
 find_package(MPI REQUIRED)
 
+option(LIFE_PAR_TRAP_DBG "Whether to enable trapping execution of the program at the start in order to facilitate attaching a debugger" OFF)
 option(LIFE_PAR_WITH_ASAN "Whether to enable address sanitizing for executable 'life_par'" OFF)
 option(LIFE_SEQ_WITH_ASAN "Whether to enable address sanitizing for executable 'life_seq'" OFF)
 
