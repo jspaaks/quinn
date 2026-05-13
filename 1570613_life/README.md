@@ -24,7 +24,7 @@ $ cmake --install . --prefix dist/
 Output should be something like:
 
 ```text
-$ ./dist/bin/life_seq                                                                                                                                                                                                                                                                                        
+$ ./dist/bin/life_seq
 ERROR 30: Expected at least 1 positional argument, aborting.
 $ ./dist/bin/life_seq -h
 Usage: life N
