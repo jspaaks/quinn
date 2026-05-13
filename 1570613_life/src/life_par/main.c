@@ -21,10 +21,10 @@ struct geom {
     } stripe;
 };
 
-static int get_ncols (struct cla * cla);
-static int get_niters (struct cla * cla);
-static int get_nrows (struct cla * cla);
-static float get_prob (struct cla * cla);
+static int get_ncols (struct cla * cla, int irank);
+static int get_niters (struct cla * cla, int irank);
+static int get_nrows (struct cla * cla, int irank);
+static float get_prob (struct cla * cla, int irank);
 static int ** neighs_calloc (struct geom geom);
 static void neighs_count(struct geom geom, const bool ** stripe, int *** neighs);
 static void neighs_free (int *** neighs);
@@ -37,48 +37,53 @@ static void stripe_print(FILE * stream, struct geom geom, bool ** stripe, int ii
 static void stripe_update(struct geom geom, bool *** stripe, const int ** neighs);
 
 
-static int get_ncols (struct cla * cla) {
+static int get_ncols (struct cla * cla, int irank) {
     const char * s = CLA_get_value_required(cla, "--ncols");
     int result = atoi(s);
-    if (result <= 0) {
+    if (result <= 0 && irank == 0) {
         const int code = __LINE__;
         fwprintf(stderr, L"ERROR %d: could not parse input --ncols %s, aborting.\n", code, s);
+        MPI_Finalize();
         exit(code);
     }
     return result;
 }
 
 
-static int get_niters (struct cla * cla) {
+static int get_niters (struct cla * cla, int irank) {
     const char * s = CLA_get_value_required(cla, "--niters");
     int result = atoi(s);
-    if (result <= 0) {
+    if (result <= 0 && irank == 0) {
         const int code = __LINE__;
-        fwprintf(stderr, L"ERROR %d: could not parse input --ncols %s, aborting.\n", code, s);
+        fwprintf(stderr, L"ERROR %d: could not parse input --niters %s, aborting.\n", code, s);
+        MPI_Finalize();
         exit(code);
     }
     return result;
 }
 
 
-static int get_nrows (struct cla * cla) {
+static int get_nrows (struct cla * cla, int irank) {
     const char * s = CLA_get_value_required(cla, "--nrows");
     int result = atoi(s);
-    if (result <= 0) {
+    if (result <= 0 && irank == 0) {
         const int code = __LINE__;
         fwprintf(stderr, L"ERROR %d: could not parse input --nrows %s, aborting.\n", code, s);
+        MPI_Finalize();
         exit(code);
     }
     return result;
 }
 
 
-static float get_prob (struct cla * cla) {
+static float get_prob (struct cla * cla, int irank) {
     const char * s = CLA_get_value_required(cla, "--prob");
     float result = (float) atof(s);
-    if (result < 0.00 || 1.00 < result) {
+    bool outofbounds = result < 0.00 || 1.00 < result;
+    if (outofbounds && irank == 0) {
         const int code = __LINE__;
         fwprintf(stderr, L"ERROR %d: could not parse input --prob %s, aborting.\n", code, s);
+        MPI_Finalize();
         exit(code);
     }
     return result;
@@ -152,10 +157,10 @@ int main (int argc, char * argv[]) {
     }
 
     // get the user input
-    geom.map.nrows = get_nrows(cla);
-    geom.map.ncols = get_ncols(cla);
-    prob = get_prob(cla);
-    niters = get_niters(cla);
+    geom.map.nrows = get_nrows(cla, irank);
+    geom.map.ncols = get_ncols(cla, irank);
+    prob = get_prob(cla, irank);
+    niters = get_niters(cla, irank);
 
     // derive the value of some variables related to the user input
     geom.stripe.nrows = blkdcmp_get_blk_sz(geom.map.nrows, nranks, irank) + 2;
@@ -329,11 +334,14 @@ static void stripe_free (bool *** stripe) {
 
 
 static void stripe_init (struct geom geom, bool ** stripe, float prob) {
-    int z0 = (int) (prob * 100);
+    int nelems = (geom.stripe.nrows - 2) * (geom.stripe.ncols - 2);
+    int nalive = (int) (prob * nelems);
     for (int irow = 1; irow < geom.stripe.nrows - 1; irow++) {
         for (int icol = 1; icol < geom.stripe.ncols - 1; icol++) {
-            int zi = rand() % 100;
-            stripe[irow][icol] = zi < z0;
+            bool cond = rand() % nelems < nalive;
+            stripe[irow][icol] = cond;
+            nalive -= cond ? 1 : 0;
+            nelems--;
         }
     }
 }
