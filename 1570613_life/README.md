@@ -26,7 +26,7 @@ Output should be something like:
 ```text
 $ ./dist/bin/life_seq                                                                                                                                                                                                                                                                                        
 ERROR 30: Expected at least 1 positional argument, aborting.
-$ ./dist/bin/life_seq -h                                                                                                                                                                                                                                                                                     
+$ ./dist/bin/life_seq -h
 Usage: life N
 
     Run Conway's Game of Life for N iterations, with N being a positive integer.
