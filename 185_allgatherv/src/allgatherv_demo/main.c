@@ -5,7 +5,7 @@
 #include <unistd.h>              // gethostname, getpid, sleep
 #endif // ALLGATHERV_DEMO_TRAP_DBG
 
-int code = 0;
+static int code = 0;
 
 int main (int argc, char * argv[]) {
     constexpr int nranks_expected = 4;
