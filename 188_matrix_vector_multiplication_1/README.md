@@ -1,5 +1,7 @@
 # 188_matrix_vector_multiplication_1
 
+Matrix-vector multiplication using NP processes (row-striped matrix implementation).
+
 ## CMake
 
 The project has been initialized with a [CMakeLists.txt](CMakeLists.txt)-based
