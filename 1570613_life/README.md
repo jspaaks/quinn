@@ -1,5 +1,7 @@
 # 1570613_life
 
+Sequential and Multiprocess implementations of Conway's Game of Life.
+
 ## CMake
 
 The project has been initialized with a [CMakeLists.txt](CMakeLists.txt)-based
@@ -22,6 +24,37 @@ $ cmake --install . --prefix dist/
 Output should be something like:
 
 ```text
+$ ./dist/bin/life_seq
+ERROR 30: Expected at least 1 positional argument, aborting.
+$ ./dist/bin/life_seq -h
+Usage: life N
+
+    Run Conway's Game of Life for N iterations, with N being a positive integer.
+
+$ ./dist/bin/life_seq 3
+state@0:
+. . . A A
+. . . . .
+. A A . A
+. A . . A
+. A . A .
+----------------
+state@1:
+. . . . .
+. . A . A
+. A A A .
+A A . . A
+. . A . .
+----------------
+state@2:
+. . . . .
+. A A . .
+A . . . A
+A . . . .
+. A . . .
+----------------
+$ ./dist/bin/life_par
+ERROR 20: Required key '-r/--nrows' not found, aborting.
 $ ./dist/bin/life_par -h
 Usage: mpirun -np NP ./dist/bin/life_par [REQUIREDS]
 
