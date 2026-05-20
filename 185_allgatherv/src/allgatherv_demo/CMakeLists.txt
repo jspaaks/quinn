@@ -6,7 +6,7 @@ target_compile_definitions(
     tgt_exe_allgatherv_demo
     PRIVATE
         $<$<CONFIG:Debug>:DEBUG>
-        $<$<BOOL:${ALLGATHER_DEMO_TRAP_DBG}>:-DLIFE_PAR_TRAP_DBG>
+        $<$<BOOL:${ALLGATHERV_DEMO_TRAP_DBG}>:-DALLGATHERV_DEMO_TRAP_DBG>
 )
 
 target_compile_features(
