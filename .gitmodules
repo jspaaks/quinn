@@ -31,3 +31,9 @@
 [submodule "1570613_life/third_party/libblkdcmp"]
 	path = 1570613_life/third_party/libblkdcmp
 	url = https://github.com/jspaaks/libblkdcmp.git
+[submodule "188_matrix_vector_multiplication_1/third_party/libblkdcmp"]
+	path = 188_matrix_vector_multiplication_1/third_party/libblkdcmp
+	url = https://github.com/jspaaks/libblkdcmp.git
+[submodule "188_matrix_vector_multiplication_1/third_party/libcla"]
+	path = 188_matrix_vector_multiplication_1/third_party/libcla
+	url = https://github.com/jspaaks/libcla.git
