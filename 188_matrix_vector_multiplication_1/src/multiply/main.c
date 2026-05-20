@@ -24,46 +24,48 @@ struct dual_intpp {
 };
 
 
-static void handle_user_input (struct dual_int * nrows, struct dual_int * ncols, int irank, int nranks, int argc, char ** argv, MPI_Comm comm);
+static void handle_user_input (struct dual_int * nrows, int * ncols, int irank, int nranks, int argc, char ** argv);
 static void matrix_calloc (int nrows, int ncols, int *** matrix);
 static void matrix_free (int *** matrix);
+static void matrix_gatherv (struct dual_int nrows, int ncols, const int ** matrix_lcl, int *** matrix_gbl, int irank, int nranks, MPI_Comm comm);
+static void matrix_print (int nrows, int ncols, const int ** matrix);
 static void matrix_rand_init (int nrows, int ncols, int *** matrix);
 static void multiply (int nrows, int ncols, const int ** lhop, const int * rhop, int ** result);
 static int parse_ncols (struct cla * cla);
 static int parse_nrows (struct cla * cla);
 static void provide_seeds (int irank, int nranks, MPI_Comm comm);
+static void result_gatherv (int nelems_lcl, const int * result_lcl, int nelems_gbl, int ** result_gbl, int irank, int nranks, MPI_Comm comm);
 static void show_usage (FILE * stream, struct cla * cla);
 static void vector_bcast (int nelems, int ** vector, MPI_Comm comm);
 static void vector_calloc (int nelems, int ** vector);
 static void vector_free (int ** vector);
+static void vector_print (int nelems, const int * vector);
 static void vector_rand_init (int nelems, int ** vector, int irank);
 
 
 static int code = 0;
 
 
-static void handle_user_input (struct dual_int * nrows, struct dual_int * ncols, int irank, int nranks, int argc, char ** argv, MPI_Comm comm) {
+static void handle_user_input (struct dual_int * nrows, int * ncols, int irank, int nranks, int argc, char ** argv) {
     struct cla * cla = CLA_create();
     CLA_add_required(cla, "--nrows", "-r");
     CLA_add_required(cla, "--ncols", "-c");
     CLA_parse(cla, argc, (const char **) argv);
-    if (irank == 0 && CLA_help_requested(cla)) {
-        show_usage(stdout, cla);
+    if (CLA_help_requested(cla)) {
+        if (irank == 0) {
+            show_usage(stdout, cla);
+            fflush(stdout);
+        }
         CLA_destroy(&cla);
         MPI_Finalize();
         exit(EXIT_SUCCESS);
     }
-    MPI_Barrier(comm);
     int nrows_gbl = parse_nrows(cla);
-    int ncols_gbl = parse_ncols(cla);
     *nrows = (struct dual_int) {
         .gbl = nrows_gbl,
         .lcl = blkdcmp_get_blk_sz(nrows_gbl, nranks, irank)
     };
-    *ncols = (struct dual_int) {
-        .gbl = ncols_gbl,
-        .lcl = -1
-    };
+    *ncols = parse_ncols(cla);
     CLA_destroy(&cla);
 }
 
@@ -102,20 +104,14 @@ int main (int argc, char * argv[]) {
         .gbl = -1,
     };
 
-    struct dual_int ncols = {
-        .lcl = -1,
-        .gbl = -1,
-    };
+    int ncols = -1;
 
     struct dual_intpp lhop = {
         .lcl = nullptr,
         .gbl = nullptr,
     };
 
-    struct dual_intp rhop = {
-        .lcl = nullptr,
-        .gbl = nullptr,
-    };
+    int * rhop = nullptr;
 
     struct dual_intp result = {
         .lcl = nullptr,
@@ -123,37 +119,53 @@ int main (int argc, char * argv[]) {
     };
 
     // get the number of rows and number of columns from the user's input
-    handle_user_input(&nrows, &ncols, irank, nranks, argc, argv, MPI_COMM_WORLD);
+    handle_user_input(&nrows, &ncols, irank, nranks, argc, argv);
 
     // ensure that each process gets their own pseudorandom number generator seed
     provide_seeds(irank, nranks, MPI_COMM_WORLD);
 
     // allocate space to accomodate the left operand, right operand, and the result
-    matrix_calloc(nrows.lcl, ncols.gbl, &lhop.lcl);
-    vector_calloc(ncols.gbl, &rhop.gbl);
+    matrix_calloc(nrows.lcl, ncols, &lhop.lcl);
+    vector_calloc(ncols, &rhop);
     vector_calloc(nrows.lcl, &result.lcl);
     if (irank == 0) {
         vector_calloc(nrows.gbl, &result.gbl);
+        matrix_calloc(nrows.gbl, ncols, &lhop.gbl);
+    } else {
+        // minimal 2-d placeholder array so I can use it as argument to MPI_gatherv later
+        matrix_calloc(1, 1, &lhop.gbl);
     }
 
     // initialize the right operand and left operand
-    matrix_rand_init(nrows.lcl, ncols.gbl, &lhop.lcl);
-    vector_rand_init(ncols.gbl, &rhop.gbl, irank);
+    matrix_rand_init(nrows.lcl, ncols, &lhop.lcl);
+    vector_rand_init(ncols, &rhop, irank);
 
     // have rank 0 broadcast the vector to the other processes
-    vector_bcast(ncols.gbl, &rhop.gbl, MPI_COMM_WORLD);
+    vector_bcast(ncols, &rhop, MPI_COMM_WORLD);
 
     // multiply the operands, store the result in `result`
-    multiply(nrows.lcl, ncols.gbl, (const int **) lhop.lcl, (const int *) rhop.gbl, &result.lcl);
+    multiply(nrows.lcl, ncols, (const int **) lhop.lcl, (const int *) rhop, &result.lcl);
 
     // use rank 0 to gather the distributed slices into result.gbl
-    // TODO
+    result_gatherv(nrows.lcl, (const int *) result.lcl, nrows.gbl, &result.gbl, irank, nranks, MPI_COMM_WORLD);
+    matrix_gatherv(nrows, ncols, (const int **) lhop.lcl, &lhop.gbl, irank, nranks, MPI_COMM_WORLD);
+
+    // print the result
+    if (irank == 0) {
+        fprintf(stdout, "matrix (left hand operand):\n");
+        matrix_print(nrows.gbl, ncols, (const int **) lhop.gbl);
+        fprintf(stdout, "vector (right hand operand):\n");
+        vector_print(ncols, (const int *) rhop);
+        fprintf(stdout, "vector (result):\n");
+        vector_print(nrows.gbl, (const int *) result.gbl);
+    }
 
     // release the memory resources associated with the operands and the result
     vector_free(&result.gbl);
     vector_free(&result.lcl);
-    vector_free(&rhop.gbl);
+    vector_free(&rhop);
     matrix_free(&lhop.lcl);
+    matrix_free(&lhop.gbl);
 
     // terminate the MPI execution environment
     MPI_Finalize();
@@ -197,6 +209,51 @@ static void matrix_free (int *** matrix) {
 
     // set the caller's matrix to nullptr;
     *matrix = nullptr;
+}
+
+
+static void matrix_gatherv (struct dual_int nrows, int ncols, const int ** matrix_lcl, int *** matrix_gbl, int irank, int nranks, MPI_Comm comm) {
+    int * lens = nullptr;
+    int * offsets = nullptr;
+    if (irank == 0) {
+        lens = calloc(nranks, sizeof(int));
+        if (lens == nullptr) {
+            code = __LINE__;
+            fprintf(stderr, "ERROR %d: Problem allocating memory for lens array, aborting.\n", code);
+            goto failure;
+        }
+        offsets = calloc(nranks, sizeof(int));
+        if (offsets == nullptr) {
+            code = __LINE__;
+            fprintf(stderr, "ERROR %d: Problem allocating memory for offsets array, aborting.\n", code);
+            goto failure;
+        }
+        int acc = 0;
+        for (int i = 0; i < nranks; i++) {
+            lens[i] = blkdcmp_get_blk_sz(nrows.gbl, nranks, i) * ncols;
+            offsets[i] = acc;
+            acc += lens[i];
+        }
+    }
+    MPI_Barrier(comm);
+    MPI_Gatherv(&matrix_lcl[0][0], nrows.lcl * ncols, MPI_INT, &(*matrix_gbl)[0][0], lens, offsets, MPI_INT, 0, comm);
+    free(lens);
+    free(offsets);
+    return;
+failure:
+    free(lens);
+    free(offsets);
+    MPI_Finalize();
+    exit(code);
+}
+
+
+static void matrix_print (int nrows, int ncols, const int ** matrix) {
+    for (int irow = 0; irow < nrows; irow++) {
+        for (int icol = 0; icol < ncols; icol++) {
+            fprintf(stdout, "%5d%c", matrix[irow][icol], icol < ncols - 1 ? ' ' : '\n');
+        }
+    }
 }
 
 
@@ -251,15 +308,58 @@ static void provide_seeds (int irank, int nranks, MPI_Comm comm) {
 }
 
 
+static void result_gatherv (int nelems_lcl, const int * result_lcl, int nelems_gbl, int ** result_gbl, int irank, int nranks, MPI_Comm comm) {
+    int * lens = nullptr;
+    int * offsets = nullptr;
+    if (irank == 0) {
+        lens = calloc(nranks, sizeof(int));
+        if (lens == nullptr) {
+            code = __LINE__;
+            fprintf(stderr, "ERROR %d: Problem allocating memory for lens array, aborting.\n", code);
+            goto failure;
+        }
+        for (int i = 0; i < nranks; i++) {
+            lens[i] = blkdcmp_get_blk_sz(nelems_gbl, nranks, i);
+        }
+        offsets = calloc(nranks, sizeof(int));
+        if (offsets == nullptr) {
+            code = __LINE__;
+            fprintf(stderr, "ERROR %d: Problem allocating memory for offsets array, aborting.\n", code);
+            goto failure;
+        }
+        int acc = lens[0];
+        for (int i = 1; i < nranks; i++) {
+            offsets[i] = acc;
+            acc += lens[i];
+        }
+    }
+    MPI_Barrier(comm);
+    MPI_Gatherv(result_lcl, nelems_lcl, MPI_INT, *result_gbl, lens, offsets, MPI_INT, 0, comm);
+    free(lens);
+    free(offsets);
+    return;
+failure:
+    free(lens);
+    free(offsets);
+    MPI_Finalize();
+    exit(code);
+}
+
+
 static void show_usage (FILE * stream, struct cla * cla) {
     fprintf(stream,
             "Usage mpirun -np NP %s [REQUIREDS]\n"
             "\n"
             "  Matrix-vector multiplication using NP processes (row-striped matrix implementation).\n"
             "\n"
+            "  The matrix is the left hand side operand; the vector is the right hand side\n"
+            "  operand. The program will initialize the operands with random integers 0..9,\n"
+            "  calculate the result, then print both operands and the resulting vector.\n"
+            "\n"
             "  Required arguments\n"
             "    --ncols, -c   Number of columns in the matrix (number of elements in the vector).\n"
-            "    --nrows, -r   Number of rows in the matrix.\n",
+            "    --nrows, -r   Number of rows in the matrix.\n"
+            "\n",
             CLA_get_exename(cla));
 }
 
@@ -291,6 +391,13 @@ static void vector_free (int ** vector) {
 
     // set the caller's vector to nullptr;
     *vector = nullptr;
+}
+
+
+static void vector_print (int nelems, const int * vector) {
+    for (int ielem = 0; ielem < nelems; ielem++) {
+        fprintf(stdout, "%5d\n", vector[ielem]);
+    }
 }
 
 
