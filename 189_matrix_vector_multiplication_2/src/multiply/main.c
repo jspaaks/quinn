@@ -1,8 +1,6 @@
 #include "blkdcmp/blkdcmp.h"
 #include "cla/cla.h"
 #include "dual_types.h"
-#include "lengths.h"
-#include "offsets.h"
 #include "matrix.h"
 #include "vector.h"
 #include <mpi.h>
@@ -83,12 +81,14 @@ int main (int argc, char * argv[]) {
     handle_user_input(&nrows, &ncols, irank, nranks, argc, argv);
 
     // calculate the array of lengths given the number of ranks
-    int * lengths = lengths_calloc(stderr, nranks);
-    lengths_init(ncols.whole, nranks, &lengths);
+    int * lengths = nullptr;
+    blkdcmp_lengths_calloc(stderr, nranks, &lengths);
+    blkdcmp_lengths_init(stderr, ncols.whole, nranks, &lengths);
 
     // calculate the array of offsets given the number of ranks
-    int * offsets = offsets_calloc(stderr, nranks);
-    offsets_init(nranks, lengths, &offsets);
+    int * offsets = nullptr;
+    blkdcmp_offsets_calloc(stderr, nranks, &offsets);
+    blkdcmp_offsets_init(stderr, nranks, lengths, &offsets);
 
     // seed each process
     provide_seeds(irank, nranks, MPI_COMM_WORLD);
@@ -154,10 +154,10 @@ int main (int argc, char * argv[]) {
     vector_free(&result.whole);
 
     // free the memory resources associated with the lengths array
-    lengths_free(&lengths);
+    blkdcmp_lengths_free(&lengths);
 
     // free the memory resources associated with the offsets array
-    offsets_free(&offsets);
+    blkdcmp_offsets_free(&offsets);
 
     // terminate the MPI execution environment
     MPI_Finalize();

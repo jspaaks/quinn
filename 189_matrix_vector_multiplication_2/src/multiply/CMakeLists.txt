@@ -54,9 +54,7 @@ target_sources(
     tgt_exe_multiply
     PRIVATE
         main.c
-        lengths.c
         matrix.c
-        offsets.c
         vector.c
 )
 
