@@ -75,26 +75,30 @@ int main (int argc, char * argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &irank);
     MPI_Comm_size(MPI_COMM_WORLD, &nranks);
 
+    // declare variables
+    int nrows = -1;
+    struct dual_int ncols = {.whole = -1, .chunk = -1};
+    struct dual_intpp matrix = {};
+    struct dual_intp vector = {};
+    struct dual_intp result = {};
+    int * lengths = nullptr;
+    int * offsets = nullptr;
+
     // get the number of rows and the number of columns from the user input
-    struct dual_int ncols;
-    int nrows;
     handle_user_input(&nrows, &ncols, irank, nranks, argc, argv);
 
     // calculate the array of lengths given the number of ranks
-    int * lengths = nullptr;
-    blkdcmp_lengths_calloc(stderr, nranks, &lengths);
-    blkdcmp_lengths_init(stderr, ncols.whole, nranks, &lengths);
+    if (blkdcmp_lengths_calloc(stderr, nranks, &lengths)) goto cleanup;
+    if (blkdcmp_lengths_init(stderr, ncols.whole, nranks, &lengths)) goto cleanup;
 
     // calculate the array of offsets given the number of ranks
-    int * offsets = nullptr;
-    blkdcmp_offsets_calloc(stderr, nranks, &offsets);
-    blkdcmp_offsets_init(stderr, nranks, lengths, &offsets);
+    if (blkdcmp_offsets_calloc(stderr, nranks, &offsets)) goto cleanup;
+    if (blkdcmp_offsets_init(stderr, nranks, lengths, &offsets)) goto cleanup;
 
     // seed each process
     provide_seeds(irank, nranks, MPI_COMM_WORLD);
 
     // allocate memory space for each process' chunk of the matrix, and the whole matrix if you're rank 0
-    struct dual_intpp matrix;
     matrix.chunk = matrix_calloc(nrows, ncols.chunk);
     if (irank == 0) {
         matrix.whole = matrix_calloc(nrows, ncols.whole);
@@ -103,7 +107,6 @@ int main (int argc, char * argv[]) {
     }
 
     // allocate memory space for each process' chunk of the vector, and the whole vector if you're rank 0
-    struct dual_intp vector;    
     vector.chunk = vector_calloc(ncols.chunk);
     if (irank == 0) {
         vector.whole = vector_calloc(ncols.whole);
@@ -112,7 +115,6 @@ int main (int argc, char * argv[]) {
     }
 
     // allocate memory space for each process' (whole) result, and the reduced result if you're rank 0
-    struct dual_intp result;
     result.chunk = vector_calloc(nrows);
     if (irank == 0) {
         result.whole = vector_calloc(nrows);
@@ -140,6 +142,8 @@ int main (int argc, char * argv[]) {
 
     // print the distributed vector
     result_print(stdout, nrows, (const int *) result.whole, MPI_COMM_WORLD);
+
+cleanup:
 
     // free the memory resources related to the matrix
     matrix_free(&matrix.chunk);
