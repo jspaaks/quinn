@@ -43,3 +43,6 @@
 [submodule "189_matrix_vector_multiplication_2/third_party/libblkdcmp"]
 	path = 189_matrix_vector_multiplication_2/third_party/libblkdcmp
 	url = https://github.com/jspaaks/libblkdcmp.git
+[submodule "191_scatterv/third_party/libblkdcmp"]
+	path = 191_scatterv/third_party/libblkdcmp
+	url = https://github.com/jspaaks/libblkdcmp.git
