@@ -46,3 +46,6 @@
 [submodule "191_scatterv/third_party/libblkdcmp"]
 	path = 191_scatterv/third_party/libblkdcmp
 	url = https://github.com/jspaaks/libblkdcmp.git
+[submodule "194_gatherv/third_party/libblkdcmp"]
+	path = 194_gatherv/third_party/libblkdcmp
+	url = https://github.com/jspaaks/libblkdcmp.git
