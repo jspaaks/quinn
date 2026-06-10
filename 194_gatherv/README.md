@@ -44,7 +44,7 @@ sudo apt install libasan8
 ```
 
 The CMake variable `GATHERV_WITH_ASAN` can be used to enable address sanitizing on the
-executable `gatherv`. `GAHTERV_WITH_ASAN`'s value is `OFF` by default. To
+executable `gatherv`. `GATHERV_WITH_ASAN`'s value is `OFF` by default. To
 enable it, configure the build via `ccmake ..`, or via a command line argument with:
 
 ```console
