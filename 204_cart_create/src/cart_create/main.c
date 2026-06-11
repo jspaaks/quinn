@@ -5,12 +5,35 @@
 #include <stdlib.h>
 #include <unistd.h>              // gethostname, getpid, sleep
 
+
 #define NDIMS 2
 #define NROWS 4
 #define NCOLS 3
 
 
+struct world {
+    int irank;
+    MPI_Comm comm;
+};
+
+
+struct cart {
+    int irank;
+    int coords[NDIMS];
+    struct {
+        int top;
+        int right;
+        int bottom;
+        int left;
+    } neighbors;
+    MPI_Comm comm;
+};
+
+
 int main (int argc, char * argv[]) {
+
+    // if the program exits unexpectedly, the program should reset errcode to a nonzero value
+    int errcode = EXIT_SUCCESS;
 
     // initialize mpi
     MPI_Init(&argc, &argv);
@@ -32,65 +55,97 @@ int main (int argc, char * argv[]) {
     }
 #endif // CART_CREATE_TRAP_DBG
 
-    // get your own rank
-    int irank = -1;
-    MPI_Comm_rank(MPI_COMM_WORLD, &irank);
+    // initialize the struct that holds information about the world topology
+    struct world world = {
+        .comm = MPI_COMM_WORLD,
+        .irank = -1,
+    };
+
+    // let each process get its own rank within MPI_COMM_WORLD
+    MPI_Comm_rank(world.comm, &world.irank);
 
     // get the number of ranks
     int nranks = -1;
-    MPI_Comm_size(MPI_COMM_WORLD, &nranks);
+    MPI_Comm_size(world.comm, &nranks);
     if (nranks != 12) {
-        if (irank == 0) {
+        if (world.irank == 0) {
             fprintf(stderr, "Program is meant to run on 12 processes, aborting.\n");
         }
         goto cleanup;
     }
 
+    // empty-initialize the struct that holds information about the cartesian topology
+    struct cart cart = {};
+
     // let's create a Cartesian grid of processes of 4 rows and 3 columns, with periodic boundaries
     // horizontally but not vertically.
     int dims[NDIMS] = {NROWS, NCOLS};
     int isperiodic[NDIMS] = {0, 1};
-    MPI_Comm comm_cart = {0};
-    MPI_Cart_create(MPI_COMM_WORLD, 2, dims, isperiodic, 0, &comm_cart);
+    {
+        int reorder = 0;
+        MPI_Cart_create(world.comm, NDIMS, dims, isperiodic, reorder, &cart.comm);
+    }
+
+    // let each process get its own rank within cart.comm
+    MPI_Comm_rank(cart.comm, &cart.irank);
 
     // use the rank to derive my coordinates in the topology
-    int coords[NDIMS] = {-1, -1};
-    MPI_Cart_coords(comm_cart, irank, NDIMS, coords);
+    MPI_Cart_coords(cart.comm, cart.irank, NDIMS, cart.coords);
 
     // use my rank to find the ranks of the nodes in the topology that are above, to the left, below,
     // and to the right of me, or -2 if there aren't any nodes in that direction
-    int irank_top = -1;
-    int irank_bottom = -1;
-    int irank_left = -1;
-    int irank_right = -1;
     {
-        int vertically = 0;
-        int displacement = 1;
-        MPI_Cart_shift(comm_cart, vertically, displacement, &irank_top, &irank_bottom);
+        const int vertically = 0;
+        const int displacement = 1;
+        MPI_Cart_shift(cart.comm, vertically, displacement, &cart.neighbors.top, &cart.neighbors.bottom);
     }
     {
-        int horizontally = 1;
-        int displacement = 1;
-        MPI_Cart_shift(comm_cart, horizontally, displacement, &irank_left, &irank_right);
+        const int horizontally = 1;
+        const int displacement = 1;
+        MPI_Cart_shift(cart.comm, horizontally, displacement, &cart.neighbors.left, &cart.neighbors.right);
     }
 
-    // let each rank print its diagnositic information
-    if (irank == 0) {
+    // if you're root, allocate space for the array of struct carts; otherwise do nothing
+    struct cart * carts = nullptr;
+    if (cart.irank == 0) {
+        carts = calloc(nranks, sizeof(struct cart));
+        if (carts == nullptr) {
+            errcode = __LINE__;
+            fprintf(stderr, "ERROR %d: could not allocate memory for carts, aborting.\n", errcode);
+            goto cleanup;
+        }
+    }
+
+    // gather each process's cart struct on root
+    MPI_Gather(&cart, sizeof(struct cart), MPI_BYTE, carts, sizeof(struct cart), MPI_BYTE, 0, cart.comm);
+
+    // if you're root, print the cart information for all processes within cart.comm
+    if (cart.irank == 0) {
         fprintf(stdout,
                 "Using a Cartesian topology communicator with %d rows and %d columns of processes\n"
                 "with a periodic boundary horizontally, but not vertically.\n\n"
                 "row  |  column  |  rank  |  top  |  right  |  bottom  |  left\n", NROWS, NCOLS);
-        fflush(stdout);
+        for (int i = 0; i < nranks; i++) {
+            fprintf(stdout,
+                    "%4d | %8d | %6d | %5d | %7d | %8d | %6d \n",
+                    carts[i].coords[0],
+                    carts[i].coords[1],
+                    carts[i].irank,
+                    carts[i].neighbors.top,
+                    carts[i].neighbors.right,
+                    carts[i].neighbors.bottom,
+                    carts[i].neighbors.left);
+        }
     }
-    sleep(1);
-    MPI_Barrier(comm_cart);
-
-    fprintf(stdout, "%4d | %8d | %6d | %5d | %7d | %8d | %6d \n", coords[0], coords[1], irank, irank_top, irank_right, irank_bottom, irank_left);
 
 cleanup:
+
+    // release memory resources associated with carts
+    free(carts);
+    carts = nullptr;
 
     // terminate the MPI execution environment
     MPI_Finalize();
 
-    return EXIT_SUCCESS;
+    return errcode;
 }
