@@ -27,23 +27,23 @@ $ cmake --install . --prefix dist/
 Output should be something like:
 
 ```text
-$ mpirun -np 12 --oversubscribe ./dist/bin/cart_create
+$ mpirun -np 12 --oversubscribe ./dist/bin/cart_create                                                                                                                                                                                                                     
 Using a Cartesian topology communicator with 4 rows and 3 columns of processes
 with a periodic boundary horizontally, but not vertically.
 
 row  |  column  |  rank  |  top  |  right  |  bottom  |  left
+   0 |        0 |      0 |    -2 |       1 |        3 |      2 
+   0 |        1 |      1 |    -2 |       2 |        4 |      0 
+   0 |        2 |      2 |    -2 |       0 |        5 |      1 
+   1 |        0 |      3 |     0 |       4 |        6 |      5 
+   1 |        1 |      4 |     1 |       5 |        7 |      3 
+   1 |        2 |      5 |     2 |       3 |        8 |      4 
    2 |        0 |      6 |     3 |       7 |        9 |      8 
    2 |        1 |      7 |     4 |       8 |       10 |      6 
    2 |        2 |      8 |     5 |       6 |       11 |      7 
-   3 |        2 |     11 |     8 |       9 |       -2 |     10 
-   0 |        0 |      0 |    -2 |       1 |        3 |      2 
-   1 |        0 |      3 |     0 |       4 |        6 |      5 
-   1 |        1 |      4 |     1 |       5 |        7 |      3 
-   0 |        2 |      2 |    -2 |       0 |        5 |      1 
-   3 |        1 |     10 |     7 |      11 |       -2 |      9 
-   1 |        2 |      5 |     2 |       3 |        8 |      4 
    3 |        0 |      9 |     6 |      10 |       -2 |     11 
-   0 |        1 |      1 |    -2 |       2 |        4 |      0 
+   3 |        1 |     10 |     7 |      11 |       -2 |      9 
+   3 |        2 |     11 |     8 |       9 |       -2 |     10
 ```
 
 ## Address sanitizing
