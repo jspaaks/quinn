@@ -15,5 +15,4 @@ elseif(UNIX)
     list(APPEND CMAKE_INSTALL_RPATH $ORIGIN/../lib)
 endif()
 
-add_subdirectory(third_party/libblkdcmp)
 add_subdirectory(src/cart_create)
