@@ -1,0 +1,4 @@
+/build
+/cachegrind.out.*
+/callgrind.out.*
+/.vscode
