@@ -28,16 +28,9 @@ target_compile_options(
         $<$<CONFIG:Release>:-Werror>
 )
 
-target_include_directories(
-    tgt_exe_cart_create
-    PRIVATE
-        ../../third_party/libblkdcmp/include
-)
-
 target_link_libraries(
     tgt_exe_cart_create
     PRIVATE
-        tgt_lib_blkdcmp
         MPI::MPI_C
 )
 

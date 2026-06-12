@@ -1,4 +1,3 @@
-#include "blkdcmp/blkdcmp.h"
 #include "dual_types.h"
 #include <mpi.h>
 #include <stdio.h>
