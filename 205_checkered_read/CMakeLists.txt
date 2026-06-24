@@ -4,6 +4,7 @@ project(205_checkered_read LANGUAGES C)
 
 find_package(MPI REQUIRED)
 
+option(READ_TRAP_DBG "Whether to enable trapping the debugger when executing 'read'" OFF)
 option(READ_WITH_ASAN "Whether to enable address sanitizing for executable 'read'" OFF)
 
 set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)

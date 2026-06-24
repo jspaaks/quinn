@@ -1,6 +1,6 @@
-[![Copier](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/copier-org/copier/master/img/badge/badge-grayscale-inverted-border-orange.json)](https://github.com/copier-org/copier)
-
 # 205_checkered_read
+
+Exploring data distribution patterns in a Cartesian communicator.
 
 ## CMake
 
@@ -24,53 +24,41 @@ $ cmake --install . --prefix dist/
 $ ./dist/bin/read
 ```
 
-Should output something like:
+The program should generate a grid of 7x11 integers randomly draw from the interval [0,9]. Each row then
+gets distributed to the first first process in each column of the Cartesian communicator, where it is
+further distributed along the members of that row in the Cartesian communcicator. Each process then reports
+its chunk of the original matrix to the terminal, something like:
 
 ```text
--- test compile definitions
-   DEBUG compile definition has been defined.
-
--- test wether math library was linked
-   sqrt(144) = 12.000000
-
--- test c2x / c23 features
-   0 1 2 3 4
-
--- test own library
-   divide(2, 3) = 0
-   multiply(2, 3) = 6
-
--- test external library
-   add(2, 3) = 5
-   subtract(2, 3) = -1
-```
-
-## Testing
-
-Building and running the tests requires that [Criterion](https://github.com/Snaipe/Criterion) is
-installed on the system, e.g. with
-
-```console
-$ sudo apt install libcriterion3 libcriterion-dev
-```
-
-Run the tests with
-
-```console
-$ ./dist/bin/test_operations -j1 --verbose
-```
-
-The CMake variable `OPERATIONS_BUILD_TESTING` can be used to build the
-tests.
-
-- When this project is the top project, `OPERATIONS_BUILD_TESTING` inherits the value of
-  CTest's `BUILD_TESTING`, which is set to ON by default.
-- When this project is not the top project but instead it is used as a dependency to a parent
-  project, the default is to not build the tests. However, building the tests is still possible by
-  setting the `OPERATIONS_BUILD_TESTING` to `ON`, e.g like so:
-
-```console
-$ cmake -DOPERATIONS_BUILD_TESTING=ON ..
+$ mpirun -np 4 ./dist/bin/read
+(1,1) has submatrix of size 4x6
+(0,0) topology: 2x2
+(0,0) has submatrix of size 3x5
+(0,0) 6 4 9 8 6 6 3 1 5 6 2
+(0,0) 5 4 7 9 1 1 1 1 9 0 0
+(0,0) 9 2 6 3 1 4 8 2 5 4 8
+(0,0) 6 4 6 4 8 7 1 6 2 8 2
+(0,0) 9 8 4 2 9 5 1 2 7 0 4
+(0,0) 5 6 7 2 4 1 9 0 1 8 5
+(0,0) 8 2 5 7 6 1 9 4 4 0 2
+(0,1) has submatrix of size 3x6
+(1,0) has submatrix of size 4x5
+(0,0) lengths: 5 6
+(0,0) offsets: 0 5
+(1,0): 6 4 6 4 8
+(1,0): 9 8 4 2 9
+(1,0): 5 6 7 2 4
+(1,0): 8 2 5 7 6
+(0,1): 6 3 1 5 6 2
+(0,1): 1 1 1 9 0 0
+(0,1): 4 8 2 5 4 8
+(0,0): 6 4 9 8 6
+(0,0): 5 4 7 9 1
+(0,0): 9 2 6 3 1
+(1,1): 7 1 6 2 8 2
+(1,1): 5 1 2 7 0 4
+(1,1): 1 9 0 1 8 5
+(1,1): 1 9 4 4 0 2
 ```
 
 ## Address sanitizing
@@ -88,6 +76,16 @@ enable it, configure the build via `ccmake ..`, or via a command line argument w
 
 ```console
 $ cmake -DREAD_WITH_ASAN=ON ..
+```
+
+## Debugging 
+
+The CMake variable `READ_TRAP_DBG` can be used to enable trapping the debugger when
+executing `read`. `READ_TRAP_DBG`'s value is `OFF` by default. To
+enable it, configure the build via `ccmake ..`, or via a command line argument with:
+
+```console
+$ cmake -DREAD_TRAP_DBG=ON ..
 ```
 
 ## Acknowledgements

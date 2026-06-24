@@ -5,7 +5,7 @@ set_property(TARGET tgt_exe_read PROPERTY OUTPUT_NAME read)
 target_compile_definitions(
     tgt_exe_read
     PRIVATE
-        $<$<BOOL:${READ_CREATE_TRAP_DBG}>:-DREAD_CREATE_TRAP_DBG>
+        $<$<BOOL:${READ_TRAP_DBG}>:-DREAD_TRAP_DBG>
         $<$<CONFIG:Debug>:DEBUG>
 )
 
